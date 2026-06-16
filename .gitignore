@@ -1,0 +1,27 @@
+# PHP / Laravel (apps/api)
+/apps/api/vendor/
+/apps/api/node_modules/
+/apps/api/.env
+/apps/api/.env.backup
+/apps/api/storage/*.key
+/apps/api/storage/framework/cache/data/*
+/apps/api/storage/framework/sessions/*
+/apps/api/storage/framework/views/*
+/apps/api/storage/logs/*
+/apps/api/public/build/
+/apps/api/public/hot
+/apps/api/database/*.sqlite
+/apps/api/.phpunit.cache/
+/apps/api/.phpunit.result.cache
+/apps/api/storage/phpstan/
+
+# JS / Vite (apps/web)
+/apps/web/node_modules/
+/apps/web/dist/
+/apps/web/.vite/
+
+# Tooling
+node_modules/
+.DS_Store
+*.log
+.claude/settings.local.json
