@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Domain\Scheduling\BergerRoundRobinScheduler;
 
+const EVEN_TEAM_COUNTS = 'even team counts';
+
 function pairKey(string $a, string $b): string
 {
     return implode('-', [min($a, $b), max($a, $b)]);
@@ -16,7 +18,7 @@ function fixturesFor(int $teamCount): array
     return (new BergerRoundRobinScheduler)->schedule($teams);
 }
 
-dataset('even team counts', [2, 4, 8, 32]);
+dataset(EVEN_TEAM_COUNTS, [2, 4, 8, 32]);
 
 it('produces every team pair exactly once home and once away', function (int $n) {
     $fixtures = fixturesFor($n);
@@ -28,7 +30,7 @@ it('produces every team pair exactly once home and once away', function (int $n)
 
     expect(array_unique($ordered))->toHaveCount($n * ($n - 1))
         ->and(array_count_values($unordered))->each->toBe(2);
-})->with('even team counts');
+})->with(EVEN_TEAM_COUNTS);
 
 it('spans exactly 2*(n-1) weeks with every team playing once per week', function (int $n) {
     $fixtures = fixturesFor($n);
@@ -48,7 +50,7 @@ it('spans exactly 2*(n-1) weeks with every team playing once per week', function
     }
 
     expect($byWeek)->toHaveCount($weeks);
-})->with('even team counts');
+})->with(EVEN_TEAM_COUNTS);
 
 it('rejects an odd number of teams', function () {
     fixturesFor(3);

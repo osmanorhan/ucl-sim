@@ -76,9 +76,4 @@ class AppServiceProvider extends ServiceProvider
 
         return is_int($configured) ? $configured : self::DEFAULT_ITERATIONS;
     }
-
-    public function boot(): void
-    {
-        //
-    }
 }

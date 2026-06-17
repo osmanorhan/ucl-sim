@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+const LEAGUES_URL = '/api/leagues';
+
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
@@ -31,7 +33,7 @@ function leaguePayload(int $seed = 42): array
 
 function createLeague(int $seed = 42): string
 {
-    return test()->postJson('/api/leagues', leaguePayload($seed))->json('league.id');
+    return test()->postJson(LEAGUES_URL, leaguePayload($seed))->json('league.id');
 }
 
 /**
@@ -53,7 +55,7 @@ function goalsByMatch(array $fixtures): array
 }
 
 it('creates a league and returns a fresh versioned snapshot', function () {
-    $response = $this->postJson('/api/leagues', leaguePayload());
+    $response = $this->postJson(LEAGUES_URL, leaguePayload());
 
     $response->assertCreated()
         ->assertJsonPath('version', 1)
@@ -82,7 +84,7 @@ it('plays a week and advances the snapshot', function () {
 });
 
 it('plays the whole season in one call, equal to playing every week by hand', function () {
-    $allAtOnce = $this->postJson('/api/leagues/'.createLeague(7).'/play-all')->json();
+    $allAtOnce = $this->postJson(LEAGUES_URL.'/'.createLeague(7).'/play-all')->json();
 
     $byHand = createLeague(7);
     $stepwise = null;
@@ -96,8 +98,8 @@ it('plays the whole season in one call, equal to playing every week by hand', fu
 });
 
 it('accepts a negative seed and remains reproducible', function () {
-    $first = $this->postJson('/api/leagues/'.createLeague(-7).'/play-all')->json();
-    $second = $this->postJson('/api/leagues/'.createLeague(-7).'/play-all')->json();
+    $first = $this->postJson(LEAGUES_URL.'/'.createLeague(-7).'/play-all')->json();
+    $second = $this->postJson(LEAGUES_URL.'/'.createLeague(-7).'/play-all')->json();
 
     expect(goalsByMatch($first['fixtures']))->toEqual(goalsByMatch($second['fixtures']));
 });
@@ -155,5 +157,5 @@ it('rejects a league with an odd number of teams', function () {
     $payload = leaguePayload();
     array_pop($payload['teams']);
 
-    $this->postJson('/api/leagues', $payload)->assertStatus(422)->assertJsonValidationErrors('teams');
+    $this->postJson(LEAGUES_URL, $payload)->assertStatus(422)->assertJsonValidationErrors('teams');
 });
