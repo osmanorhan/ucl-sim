@@ -8,6 +8,8 @@ use InvalidArgumentException;
 
 final readonly class ChampionProbabilities
 {
+    private const SUM_TOLERANCE = 1e-9;
+
     /** @param array<string, float> $byTeam */
     public function __construct(private array $byTeam)
     {
@@ -15,6 +17,11 @@ final readonly class ChampionProbabilities
             if ($probability < 0.0 || $probability > 1.0) {
                 throw new InvalidArgumentException("Probability for {$teamId} must lie in [0, 1].");
             }
+        }
+
+        $total = array_sum($byTeam);
+        if (abs($total - 1.0) > self::SUM_TOLERANCE) {
+            throw new InvalidArgumentException("Champion probabilities must form a distribution summing to 1.0; got {$total}.");
         }
     }
 

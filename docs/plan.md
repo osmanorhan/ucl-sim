@@ -162,18 +162,23 @@ interface ChampionshipPredictor {
 ### 2.4 The evaluation harness (the differentiator)
 
 ```php
-final class EvaluationHarness {
-    /** Run each predictor on the same seeded scenarios; score against simulated ground truth. */
-    public function compare(array $predictors, LeagueState $state, int $seed, int $trials): array;
-    // returns StrategyScorecard[]: brierScore, logLoss, meanLatencyMs, deterministic(bool)
+final readonly class EvaluationHarness {
+    /** Grade each predictor on the same seeded scenarios against simulated ground truth. */
+    public function compare(array $predictors, array $scenarios, int $groundTruthDraws): array;
+    // $predictors: label => ChampionPredictor; returns StrategyScorecard[] sorted by Brier
+    // scorecard: label, brier, logLoss, meanLatencyMs, deterministic(bool)
 }
 ```
 
-Because this is a simulation we **own the ground truth**: roll the reference match model to
-season end many times to get the *true* championship distribution, then score each predictor's
-estimate with **Brier score / log-loss**, alongside **latency** and a **determinism** check
-(same seed → identical output). This is literally "analyse which one is better, safer, faster"
-and is what makes this a platform rather than a CRUD app.
+Because this is a simulation we **own the ground truth** — but we score against *realised
+outcomes*, not a peeked-at true distribution (ADR-05). The reference model is rolled to season
+end many times to draw realised champions; each predictor's estimate is graded against those
+same outcomes with **Brier / log-loss** (proper rules — truth-telling minimises expected loss),
+under **common random numbers** (paired, so outcome noise cancels), alongside **latency** and a
+**determinism** check (same seed → identical output). Predictors arrive **labelled** rather than
+carrying a registry `key()` — identity is deferred to the Phase-4 registry. Randomness is supplied
+per `predict()` call, not held, so a run is reproducible from the source it is handed. This is
+literally "analyse which one is better, safer, faster" and is what makes this a platform.
 
 **Latency is a per-strategy benchmark, not an architectural special case.** Each strategy owns
 its scorecard; from measured `meanLatencyMs` the harness classifies it **inline-safe vs
@@ -380,7 +385,7 @@ validate input.
 |---|---|---|
 | **1. Pure domain core** | VOs, `CompositeComparator`, `LeagueTable` projection, `BergerRoundRobinScheduler` | property tests green; 12-match double round-robin generated correctly; arch test enforces purity |
 | **2. Strategy seam** | `MatchSimulator`/`ChampionshipPredictor` interfaces, `PoissonSimulator`, `MonteCarloPredictor`, `DeterministicClincher`, `SeededRandomSource` | exact-sequence tests; distribution test within tolerance; clincher returns exact 1.0/0.0 |
-| **3. Evaluation harness** ⭐ | `EvaluationHarness` + `StrategyScorecard`, one baseline strategy to beat | scorecard ranks Poisson/MC above naive baseline on Brier; determinism check passes |
+| **3. Evaluation harness** ⭐ | `EvaluationHarness` + `StrategyScorecard` + `ScoringRule`/`BrierScore`/`LogLoss`, shared `ChampionSampler`, `PointsHeuristicPredictor` baseline | ✅ scorecard ranks MC above the points-heuristic baseline on Brier & log-loss; clincher scores 0 once settled; determinism check passes (ADR-05) |
 | **4. Laravel delivery** | migrations (`teams`, `matches`, `leagues`), repositories, registry wiring, REST + feature tests | all endpoints green; edit-recompute correct via re-fold |
 | **5. Vue SPA** | the 5 components, Pinia store, inline edit, prediction panel (week ≥ 4) | Playwright E2E green; edits reflect immediately |
 | **6. CI/CD + deploy** | Docker, Actions pipeline, live link | pipeline green end-to-end; public URL works |

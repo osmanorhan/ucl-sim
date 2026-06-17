@@ -6,6 +6,7 @@ namespace App\Domain\Prediction;
 
 use App\Domain\League\Fixture;
 use App\Domain\League\LeagueTable;
+use App\Domain\Random\RandomSource;
 use App\Domain\Team\Team;
 
 /**
@@ -20,7 +21,7 @@ final readonly class DeterministicClincher implements ChampionPredictor
 
     public function __construct(private LeagueTable $table) {}
 
-    public function predict(array $teams, array $played, array $remaining): ChampionProbabilities
+    public function predict(array $teams, array $played, array $remaining, RandomSource $random): ChampionProbabilities
     {
         $points = [];
         foreach ($this->table->project($teams, $played) as $standing) {
