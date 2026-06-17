@@ -388,19 +388,4 @@ validate input.
 | **3. Evaluation harness** ⭐ | `EvaluationHarness` + `StrategyScorecard` + `ScoringRule`/`BrierScore`/`LogLoss`, shared `ChampionSampler`, `PointsHeuristicPredictor` baseline | ✅ scorecard ranks MC above the points-heuristic baseline on Brier & log-loss; clincher scores 0 once settled; determinism check passes (ADR-05) |
 | **4. Laravel delivery** ✅ | migrations (`leagues`, `teams`, `matches`), `LeagueRepository`/Eloquent, `StrategyRegistry`, `LeagueState`+`SeasonProgression`, `LeagueService`+`SnapshotAssembler`, REST + feature tests | ✅ all 9 endpoints green; edit re-folds; **play-week × N ≡ play-all**; predictions gated at week ≥ 4; live odds via `SettledOrSimulated` (ADR-06) |
 | **5. Vue SPA** ✅ | the 5 components, Pinia store, inline edit, prediction panel (week ≥ 4) | ✅ Vitest pins the pure seams; Playwright E2E green (happy path + edge cases) against a mocked API; edits reflect immediately (ADR-07) |
-| **6. CI/CD + deploy** | Docker, Actions pipeline, live link | pipeline green end-to-end; public URL works |
-
-⭐ Phase 3 is the differentiator — it is what turns "a football app" into "a platform that
-compares algorithms." Do not skip it.
-
----
-
-## 12. Future work (documented seams, not built)
-
-- MLE / Bayesian (Dixon–Coles) self-calibration of team strengths from played results — a
-  `GoalModel` swap.
-- Dixon–Coles low-score correlation correction (τ for 0-0/1-0/0-1/1-1).
-- Queued/async prediction recompute + websocket push (moving the ADR-01 precompute off the
-  request thread) when write latency or realtime needs justify it — same `PredictionService` seam.
-- Online champion/challenger split + guardrail auto-rollback — the direct analogue of the
-  unicorn's experimentation layer.
+| **6. CI/CD + deploy** ✅ | single same-origin FrankenPHP image, GitHub Actions pipeline (API + web + E2E gates), Fly.io deploy | ✅ image builds and boots (health, SPA, deep-link fallback, `/api` all serve); pipeline gates both apps; deploy gated on green + push to `main` (ADR-08) |

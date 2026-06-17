@@ -1,0 +1,37 @@
+app = "ucl-sim"
+primary_region = "fra"
+
+[build]
+  dockerfile = "infra/Dockerfile"
+
+[env]
+  APP_ENV = "production"
+  APP_DEBUG = "false"
+  LOG_CHANNEL = "stderr"
+  DB_DATABASE = "/data/database.sqlite"
+  SESSION_DRIVER = "array"
+  CACHE_STORE = "array"
+  QUEUE_CONNECTION = "sync"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/up"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+
+[[mounts]]
+  source = "sqlite_data"
+  destination = "/data"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

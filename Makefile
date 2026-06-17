@@ -12,7 +12,10 @@ install: ## Install api + web dependencies
 
 test: ## Run all tests (domain/api + web)
 	composer -d $(API) test
-	pnpm -C $(WEB) test run
+	pnpm -C $(WEB) test
+
+e2e: ## Browser end-to-end tests (Playwright)
+	pnpm -C $(WEB) test:e2e
 
 stan: ## Static analysis (PHPStan max)
 	composer -d $(API) stan
@@ -26,7 +29,10 @@ eval: ## Run the strategy evaluation harness
 lint: ## Format check (Pint)
 	composer -d $(API) lint
 
-up: ## Local dev (docker compose)
+up: ## Run the production image locally (docker compose) on :8080
 	docker compose up --build
 
-.PHONY: help install test stan arch eval lint up
+deploy: ## Deploy the live link to Fly.io
+	flyctl deploy
+
+.PHONY: help install test e2e stan arch eval lint up deploy

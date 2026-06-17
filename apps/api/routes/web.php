@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => response()->json([
-    'service' => 'champions-league-api',
-    'status' => 'ok',
-]));
+$spa = fn () => response()->file(public_path('index.html'));
+
+Route::get('/', $spa);
+
+Route::fallback(function () use ($spa) {
+    abort_if(request()->is('api/*'), 404);
+
+    return $spa();
+});

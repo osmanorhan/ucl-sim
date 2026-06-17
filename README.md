@@ -87,7 +87,8 @@ bottom (the create request captures `leagueId`/`matchId` for the rest).
 ## Testing
 
 ```bash
-make test          # api (domain + feature) and web
+make test          # api (domain + feature) and web (Vitest)
+make e2e           # browser end-to-end (Playwright)
 make stan          # PHPStan, level max
 make arch          # domain-purity fitness test
 make lint          # Pint (format check)
@@ -98,6 +99,34 @@ make lint          # Pint (format check)
   `play-week ≡ play-all` invariant, edit re-fold, prediction gating, evaluation ranking, 404/409,
   and validation.
 - **Architecture** — `app/Domain` may not import `Illuminate\*`; enforced in CI, not by discipline.
+- **Web** — Vitest pins the pure SPA seams; Playwright drives the built app against a mocked API
+  (happy path + edge cases). See [`apps/web/README.md`](apps/web/README.md).
+
+---
+
+## Deployment
+
+The API and the built SPA ship as **one same-origin container** (FrankenPHP serves both; the
+client calls `/api/*` relative, so there is no CORS). Run the exact production image locally:
+
+```bash
+make up                           # docker compose → http://localhost:8080
+```
+
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the API and web gates (including
+the Playwright E2E) **and builds the production image, boots it, and smoke-tests every serving
+class** (`infra/smoke.sh` — health, SPA, deep-link fallback, static assets, `/api`). Only when all
+three jobs are green does `main` deploy to Fly.io. One-time setup:
+
+```bash
+fly launch --no-deploy            # creates the app from fly.toml
+fly volumes create sqlite_data --size 1     # persistent SQLite disk at /data
+fly secrets set APP_KEY="$(php apps/api/artisan key:generate --show)"
+# add FLY_API_TOKEN to GitHub repo secrets so the deploy job can push
+```
+
+Then every push to `main` deploys; or `make deploy` by hand. The DB file lives on the volume, so
+the season survives redeploys — one machine is correct for the single-writer model (ADR-02/08).
 
 ---
 
