@@ -28,4 +28,11 @@ final class Guard
             throw new InvalidArgumentException("{$field} must be a positive integer.");
         }
     }
+
+    public static function positiveFloat(float $value, string $field): void
+    {
+        if ($value <= 0.0) {
+            throw new InvalidArgumentException("{$field} must be greater than zero.");
+        }
+    }
 }

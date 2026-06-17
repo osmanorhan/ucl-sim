@@ -16,14 +16,56 @@ final readonly class LeagueTable
      */
     public function project(array $teams, array $results): array
     {
-        $records = array_combine(
-            array_map(static fn (Team $team): string => $team->id, $teams),
-            array_map(static fn (Team $team): TeamRecord => new TeamRecord($team), $teams),
-        );
+        return $this->extend($this->baseline($teams), $results);
+    }
 
-        array_walk($results, fn (MatchResult $result) => $this->apply($records, $result));
+    /**
+     * Fresh records with `$played` folded in once. Reuse a baseline as the fixed starting point
+     * for many independent projections (Monte Carlo) instead of re-folding the played matches.
+     *
+     * @param  Team[]  $teams
+     * @param  MatchResult[]  $played
+     * @return array<string, TeamRecord>
+     */
+    public function baseline(array $teams, array $played = []): array
+    {
+        $records = [];
+        foreach ($teams as $team) {
+            $records[$team->id] = new TeamRecord($team);
+        }
 
-        return array_map(static fn (TeamRecord $record): Standing => $record->toStanding(), array_values($records));
+        foreach ($played as $result) {
+            $this->apply($records, $result);
+        }
+
+        return $records;
+    }
+
+    /**
+     * Fold `$results` onto a private copy of the baseline — the baseline is left untouched, so
+     * one baseline seeds any number of completed seasons.
+     *
+     * @param  array<string, TeamRecord>  $baseline
+     * @param  MatchResult[]  $results
+     * @return Standing[]
+     */
+    public function extend(array $baseline, array $results): array
+    {
+        $records = [];
+        foreach ($baseline as $id => $record) {
+            $records[$id] = clone $record;
+        }
+
+        foreach ($results as $result) {
+            $this->apply($records, $result);
+        }
+
+        $standings = [];
+        foreach ($records as $record) {
+            $standings[] = $record->toStanding();
+        }
+
+        return $standings;
     }
 
     /** @param array<string, TeamRecord> $records */

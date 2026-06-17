@@ -245,11 +245,12 @@ on a recommender's output.
 ## 4. Algorithms
 
 ### 4.1 Match model — Poisson goals from team power
-Single `power` scalar per team. A `GoalModel` maps it to expected goals:
+Single `power` scalar per team. A `GoalModel` maps it to expected goals (implemented as the
+**power-ratio** model, ADR-04):
 
 ```
-λ_home = base · exp( k · (power_home − power_away) ) · homeAdvantage
-λ_away = base · exp( k · (power_away − power_home) )
+λ_home = base · (power_home / power_away) · homeAdvantage
+λ_away = base · (power_away / power_home)
 HomeGoals ~ Poisson(λ_home),  AwayGoals ~ Poisson(λ_away)
 ```
 
@@ -257,6 +258,12 @@ Every spec requirement falls out as an *emergent property*, not a special case: 
 usually wins, upsets happen with small probability (Poisson tail), home advantage and
 "goalkeeper / supporter" effects are just extra multiplicative terms on λ. The single-scalar
 choice is deliberate (§6); a richer attack/defense model is a *new `GoalModel`*, not a rewrite.
+
+**Bounded-input assumption.** The ratio is multiplicative and unbounded, so powers are seeded
+in a sane relative band (~40–90): a 2× gap already gives a strong favourite while keeping λ
+football-realistic (≤ ~3.5). An extreme literal gap like the spec's 100-vs-10 would blow λ up
+and is represented instead as e.g. 90-vs-45. A model that ingests *any* range (e.g.
+`base · exp(k·Δpower)`) is a drop-in `GoalModel` swap if ever needed — the seam already exists.
 
 ### 4.2 Championship prediction — clincher + Monte Carlo
 - `DeterministicClincher` runs first: pure combinatorics over remaining fixtures → returns
@@ -293,6 +300,8 @@ choice is deliberate (§6); a richer attack/defense model is a *new `GoalModel`*
 | Decision | Choice | Rationale |
 |---|---|---|
 | Team strength | single `power` scalar | matches spec wording; richer = pluggable GoalModel |
+| Power source | seeded defaults, editable | reproducible demo + reviewer can tweak strengths and watch odds move |
+| Power → λ | power-ratio model, sane band | interpretable one-liner (ADR-04); seeds kept ~40–90 so λ stays realistic |
 | Calibration | out of core, documented | advertises extensibility, protects the core |
 | Frontend | Vue 3 `<script setup>` + TypeScript | type-safe FE↔BE contracts reinforce rigor |
 | Persistence | SQLite | zero DB ops, reproducible, fine for a demo |
