@@ -1,0 +1,24 @@
+meta {
+  name: Get fixtures
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/leagues/{{leagueId}}/fixtures
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.fixtures: isDefined
+}
+
+docs {
+  Fixtures grouped by week, each match carrying its result (null until played) and an `origin`
+  (null, `simulated`, or `manual`) recording where that result came from.
+}

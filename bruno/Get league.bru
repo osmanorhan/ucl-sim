@@ -1,0 +1,24 @@
+meta {
+  name: Get league
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/leagues/{{leagueId}}
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.league.id: eq {{leagueId}}
+}
+
+docs {
+  Returns the full stored snapshot (version, league meta, table, fixtures, predictions). Served
+  verbatim from the read model — no recomputation on read (ADR-01).
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Get evaluation
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/leagues/{{leagueId}}/evaluation
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.scorecards: isDefined
+}
+
+docs {
+  Runs the evaluation harness over the registered strategies and returns scorecards
+  (Brier, log-loss, mean latency, determinism), sorted best-first by Brier. The deliberately heavy
+  analysis path — not the hot read path.
+}

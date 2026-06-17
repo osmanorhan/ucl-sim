@@ -1,0 +1,25 @@
+meta {
+  name: Get predictions
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/leagues/{{leagueId}}/predictions
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.predictions.predictor: eq settled-or-simulated
+}
+
+docs {
+  Championship odds from the live predictor (Monte Carlo, short-circuited to a certainty once the
+  title is mathematically decided). Returns 409 before four weeks are complete — run this before
+  play-all to see the gate.
+}

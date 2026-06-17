@@ -1,0 +1,34 @@
+meta {
+  name: Edit match result
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{baseUrl}}/matches/{{matchId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "homeGoals": 3,
+    "awayGoals": 1
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.version: isDefined
+}
+
+docs {
+  Overwrites a single result and returns a fresh snapshot. The table and predictions are re-folded
+  from the mutated facts (ADR-06), so they can never drift; the edited match's `origin` flips to
+  `manual`. Uses the `matchId` captured by the most recent create / play request.
+}

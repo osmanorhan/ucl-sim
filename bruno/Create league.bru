@@ -1,0 +1,49 @@
+meta {
+  name: Create league
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/leagues
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Champions League",
+    "seed": 42,
+    "teams": [
+      { "id": "a", "name": "Alpha",  "power": 90 },
+      { "id": "b", "name": "Bravo",  "power": 65 },
+      { "id": "c", "name": "Cosmos", "power": 45 },
+      { "id": "d", "name": "Delta",  "power": 30 }
+    ]
+  }
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("leagueId", res.body.league.id);
+    bru.setEnvVar("matchId", res.body.fixtures[0].matches[0].id);
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.version: eq 1
+  res.body.league.totalWeeks: eq 6
+  res.body.predictions: isNull
+}
+
+docs {
+  Creates a league and returns the first versioned snapshot. Captures `leagueId` and a `matchId`
+  into the Local environment so the rest of the collection can run unedited. Teams must be an even
+  count (round-robin); an odd count returns 422.
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Play week
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/leagues/{{leagueId}}/play-week
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("matchId", res.body.fixtures[0].matches[0].id);
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.league.currentWeek: gte 1
+}
+
+docs {
+  Simulates the next unplayed week deterministically from (seed, week) and bumps the version.
+  Re-captures `matchId` to a now-played match so the edit request has a real result to overwrite.
+  Returns 409 once the season is complete.
+}

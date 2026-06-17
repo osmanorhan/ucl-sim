@@ -1,0 +1,24 @@
+meta {
+  name: Get table
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/leagues/{{leagueId}}/table
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.table: isDefined
+}
+
+docs {
+  Projected standings, ordered by the Premier League ranking (points, then goal difference, then
+  goals for, with a head-to-head mini-league breaking ties).
+}

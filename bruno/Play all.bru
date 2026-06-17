@@ -1,0 +1,33 @@
+meta {
+  name: Play all
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/leagues/{{leagueId}}/play-all
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("matchId", res.body.fixtures[0].matches[0].id);
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.league.currentWeek: eq 6
+  res.body.predictions: isDefined
+}
+
+docs {
+  Simulates every remaining week in one call — byte-identical to invoking play-week repeatedly,
+  since each week is seeded on (seed, week). After this, the season is complete and predictions are
+  available.
+}
