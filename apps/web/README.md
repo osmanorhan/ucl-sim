@@ -40,11 +40,20 @@ VITE_API_BASE_URL=http://127.0.0.1:8000 pnpm dev
 ## Test
 
 ```sh
-pnpm test
+pnpm test       # Vitest — pure seams
+pnpm test:e2e   # Playwright — flows against a mocked API
 ```
 
 Vitest covers the pure seams: the store's version-monotonicity guard, the week-state machine,
 and the Zod boundary schemas (including rejection of an unknown match origin).
+
+Playwright drives the built app against a mocked API (`e2e/fixtures.ts`) so the snapshots stay
+deterministic and no PHP backend is needed. The mocked responses still flow through the app's
+real Zod parse, so a mock that drifts from the contract fails like the real thing would. It
+covers the happy path (create → play → odds at week ≥ 4 → benchmark) and the edge cases:
+editing only corrects a played match, a server error surfaces as a toast without crashing, a
+contract-breaking response fails at the boundary, and an odd squad is blocked before any
+request is sent.
 
 ## Build
 

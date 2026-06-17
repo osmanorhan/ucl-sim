@@ -387,7 +387,7 @@ validate input.
 | **2. Strategy seam** | `MatchSimulator`/`ChampionshipPredictor` interfaces, `PoissonSimulator`, `MonteCarloPredictor`, `DeterministicClincher`, `SeededRandomSource` | exact-sequence tests; distribution test within tolerance; clincher returns exact 1.0/0.0 |
 | **3. Evaluation harness** ⭐ | `EvaluationHarness` + `StrategyScorecard` + `ScoringRule`/`BrierScore`/`LogLoss`, shared `ChampionSampler`, `PointsHeuristicPredictor` baseline | ✅ scorecard ranks MC above the points-heuristic baseline on Brier & log-loss; clincher scores 0 once settled; determinism check passes (ADR-05) |
 | **4. Laravel delivery** ✅ | migrations (`leagues`, `teams`, `matches`), `LeagueRepository`/Eloquent, `StrategyRegistry`, `LeagueState`+`SeasonProgression`, `LeagueService`+`SnapshotAssembler`, REST + feature tests | ✅ all 9 endpoints green; edit re-folds; **play-week × N ≡ play-all**; predictions gated at week ≥ 4; live odds via `SettledOrSimulated` (ADR-06) |
-| **5. Vue SPA** | the 5 components, Pinia store, inline edit, prediction panel (week ≥ 4) | Playwright E2E green; edits reflect immediately |
+| **5. Vue SPA** ✅ | the 5 components, Pinia store, inline edit, prediction panel (week ≥ 4) | ✅ Vitest pins the pure seams; Playwright E2E green (happy path + edge cases) against a mocked API; edits reflect immediately (ADR-07) |
 | **6. CI/CD + deploy** | Docker, Actions pipeline, live link | pipeline green end-to-end; public URL works |
 
 ⭐ Phase 3 is the differentiator — it is what turns "a football app" into "a platform that
