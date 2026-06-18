@@ -1,6 +1,7 @@
 <?php
 
 use App\Application\Exceptions\LeagueNotFound;
+use App\Application\Exceptions\MatchNotEditable;
 use App\Application\Exceptions\SeasonComplete;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->dontReport([
             LeagueNotFound::class,
+            MatchNotEditable::class,
             SeasonComplete::class,
         ]);
 
@@ -39,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
         })->stop();
 
         $exceptions->render(fn (LeagueNotFound $e) => response()->json(['message' => $e->getMessage()], 404));
+        $exceptions->render(fn (MatchNotEditable $e) => response()->json(['message' => $e->getMessage()], 409));
         $exceptions->render(fn (SeasonComplete $e) => response()->json(['message' => $e->getMessage()], 409));
 
         $exceptions->render(function (Throwable $e, Request $request): ?JsonResponse {

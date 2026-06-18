@@ -69,6 +69,7 @@ onMounted(() => {
 
         <aside class="side-column">
           <PredictionPanel
+            :availability="snapshot.predictionAvailability"
             :predictions="snapshot.predictions"
             :standings="snapshot.table"
           />

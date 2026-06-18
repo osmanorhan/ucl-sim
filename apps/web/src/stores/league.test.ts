@@ -22,6 +22,7 @@ function snapshotOf(id: string, version: number): LeagueSnapshot {
     league: { id, name: 'Champions League', seed: 42, currentWeek: 0, totalWeeks: 6 },
     table: [],
     fixtures: [],
+    predictionAvailability: { available: false, availableAfterCompletedWeeks: 4 },
     predictions: null,
   }
 }

@@ -29,12 +29,10 @@ export const CreateLeaguePayloadSchema = z.object({
 export const UpdateMatchPayloadSchema = z.object({
   homeGoals: z.number()
     .int('Goals must be whole numbers.')
-    .min(0, 'Goals cannot be negative.')
-    .max(30, 'Even this simulator calls VAR above 30 goals.'),
+    .min(0, 'Goals cannot be negative.'),
   awayGoals: z.number()
     .int('Goals must be whole numbers.')
-    .min(0, 'Goals cannot be negative.')
-    .max(30, 'Even this simulator calls VAR above 30 goals.'),
+    .min(0, 'Goals cannot be negative.'),
 })
 
 export const LeagueSnapshotSchema = z.object({
@@ -71,6 +69,10 @@ export const LeagueSnapshotSchema = z.object({
       origin: z.union([z.null(), z.literal(ResultOrigin.Simulated), z.literal(ResultOrigin.Manual)]),
     })),
   })),
+  predictionAvailability: z.object({
+    available: z.boolean(),
+    availableAfterCompletedWeeks: z.number().int(),
+  }),
   predictions: z.object({
     predictor: z.string(),
     odds: z.array(z.object({

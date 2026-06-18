@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application;
 
 use App\Application\Exceptions\LeagueNotFound;
+use App\Application\Exceptions\MatchNotEditable;
 use App\Application\Exceptions\SeasonComplete;
 use App\Domain\League\LeagueState;
 use App\Domain\League\MatchResult;
@@ -84,6 +85,11 @@ final readonly class LeagueService
     {
         $leagueId = $this->repository->leagueIdForMatch($matchId) ?? throw LeagueNotFound::id($matchId);
         $state = $this->load($leagueId);
+        $target = $this->match($state, $matchId);
+
+        if (! $target->isPlayed()) {
+            throw MatchNotEditable::id($matchId);
+        }
 
         $matches = array_map(
             static fn (ScheduledMatch $match): ScheduledMatch => $match->id === $matchId
@@ -109,6 +115,17 @@ final readonly class LeagueService
     private function load(string $id): LeagueState
     {
         return $this->repository->find($id) ?? throw LeagueNotFound::id($id);
+    }
+
+    private function match(LeagueState $state, string $matchId): ScheduledMatch
+    {
+        foreach ($state->matches as $match) {
+            if ($match->id === $matchId) {
+                return $match;
+            }
+        }
+
+        throw LeagueNotFound::id($matchId);
     }
 
     /** @return array<string, MatchResult> match id => simulated result */

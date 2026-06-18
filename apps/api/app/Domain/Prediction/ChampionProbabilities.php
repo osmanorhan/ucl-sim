@@ -11,8 +11,10 @@ final readonly class ChampionProbabilities
 {
     private const SUM_TOLERANCE = 1e-9;
 
+    /** @var array<string, float> */
     private array $byTeam;
 
+    /** @var array<int, array{teamId: string, probability: float}> */
     private array $entries;
 
     /** @param array<string, float> $byTeam */

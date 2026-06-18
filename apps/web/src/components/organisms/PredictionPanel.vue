@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { PredictionSet, Standing } from '../../types/league'
+import type { PredictionAvailability, PredictionSet, Standing } from '../../types/league'
 
 defineProps<{
+  availability: PredictionAvailability
   predictions: PredictionSet | null
   standings: Standing[]
 }>()
@@ -17,7 +18,9 @@ function teamName(standings: Standing[], id: string): string {
       <h2>Championship odds</h2>
     </div>
 
-    <p v-if="predictions === null" class="muted">Available after week 4.</p>
+    <p v-if="predictions === null" class="muted">
+      Available after week {{ availability.availableAfterCompletedWeeks }}.
+    </p>
 
     <div v-else class="odds-list">
       <p class="panel-note">

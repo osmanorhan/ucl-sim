@@ -131,6 +131,10 @@ export function buildSnapshot(state: State) {
     league: { id: LEAGUE_ID, name: 'Champions League', seed: 42, currentWeek: state.playedWeeks, totalWeeks: 6 },
     table,
     fixtures,
+    predictionAvailability: {
+      available: predictions !== null,
+      availableAfterCompletedWeeks: 4,
+    },
     predictions,
   }
 }

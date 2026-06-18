@@ -57,7 +57,6 @@ function save(event: Event) {
           name="homeGoals"
           type="number"
           min="0"
-          max="30"
           :title="`${homeName} goals`"
           :value="match.homeGoals ?? 0"
         >
@@ -73,7 +72,6 @@ function save(event: Event) {
           name="awayGoals"
           type="number"
           min="0"
-          max="30"
           :title="`${awayName} goals`"
           :value="match.awayGoals ?? 0"
         >

@@ -20,14 +20,13 @@ use App\Domain\Ranking\Ranking;
  */
 final readonly class SnapshotAssembler
 {
-    private const PREDICTION_MIN_WEEK = 4;
-
     private const PREDICTION_SEED_OFFSET = 7_001;
 
     public function __construct(
         private LeagueTable $table,
         private Ranking $ranking,
         private ChampionPredictor $live,
+        private PredictionAvailability $availability,
         private string $liveKey,
     ) {}
 
@@ -45,6 +44,7 @@ final readonly class SnapshotAssembler
             ],
             'table' => $this->table($state),
             'fixtures' => $this->fixtures($state),
+            'predictionAvailability' => $this->availability->for($state),
             'predictions' => $this->predictions($state),
         ];
     }
@@ -107,7 +107,7 @@ final readonly class SnapshotAssembler
     /** @return array<string, mixed>|null */
     private function predictions(LeagueState $state): ?array
     {
-        if ($state->completedWeeks() < self::PREDICTION_MIN_WEEK) {
+        if (! $this->availability->availableFor($state)) {
             return null;
         }
 

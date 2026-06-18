@@ -65,6 +65,8 @@ it('creates a league and returns a fresh versioned snapshot', function () {
         ->assertJsonPath('version', 1)
         ->assertJsonPath('league.currentWeek', 0)
         ->assertJsonPath('league.totalWeeks', 6)
+        ->assertJsonPath('predictionAvailability.available', false)
+        ->assertJsonPath('predictionAvailability.availableAfterCompletedWeeks', 4)
         ->assertJsonPath('predictions', null);
 
     expect($response->json('table'))->toHaveCount(4)
@@ -121,6 +123,15 @@ it('re-folds the table and bumps the version when a result is edited', function 
     expect($editedMatch['homeGoals'])->toBe(9)
         ->and($editedMatch['origin'])->toBe('manual')
         ->and($edited->json('table'))->not->toEqual($snapshot['table']);
+});
+
+it('rejects editing a match before it has been played', function () {
+    $id = createLeague();
+    $snapshot = $this->getJson("/api/leagues/{$id}")->json();
+    $future = $snapshot['fixtures'][5]['matches'][0];
+
+    $this->putJson("/api/matches/{$future['id']}", ['homeGoals' => 1, 'awayGoals' => 1])
+        ->assertStatus(409);
 });
 
 it('keeps predictions hidden until four weeks are complete', function () {

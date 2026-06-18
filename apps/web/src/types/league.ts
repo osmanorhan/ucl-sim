@@ -49,11 +49,17 @@ export type PredictionSet = {
   odds: Prediction[]
 }
 
+export type PredictionAvailability = {
+  available: boolean
+  availableAfterCompletedWeeks: number
+}
+
 export type LeagueSnapshot = {
   version: number
   league: LeagueMeta
   table: Standing[]
   fixtures: WeekFixtures[]
+  predictionAvailability: PredictionAvailability
   predictions: PredictionSet | null
 }
 

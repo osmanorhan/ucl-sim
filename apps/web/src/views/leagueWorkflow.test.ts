@@ -68,6 +68,7 @@ function snapshot(overrides: Partial<LeagueSnapshot> = {}): LeagueSnapshot {
         origin: null,
       }],
     }],
+    predictionAvailability: { available: false, availableAfterCompletedWeeks: 4 },
     predictions: null,
     ...overrides,
   }
@@ -147,6 +148,7 @@ describe('league workflow', () => {
         predictor: 'settled-or-simulated',
         odds: [{ teamId: 'alpha', probability: 0.72 }],
       },
+      predictionAvailability: { available: true, availableAfterCompletedWeeks: 4 },
     })
     const evaluation: EvaluationResult = {
       leagueId: 'L1',

@@ -55,10 +55,9 @@ describe('UpdateMatchPayloadSchema', () => {
     expect(UpdateMatchPayloadSchema.safeParse({ homeGoals: 3, awayGoals: 0 }).success).toBe(true)
   })
 
-  it('rejects negative, fractional, and absurd scores', () => {
+  it('rejects negative and fractional scores', () => {
     expect(UpdateMatchPayloadSchema.safeParse({ homeGoals: -1, awayGoals: 0 }).success).toBe(false)
     expect(UpdateMatchPayloadSchema.safeParse({ homeGoals: 1.5, awayGoals: 0 }).success).toBe(false)
-    expect(UpdateMatchPayloadSchema.safeParse({ homeGoals: 31, awayGoals: 0 }).success).toBe(false)
   })
 })
 
@@ -91,6 +90,7 @@ describe('LeagueSnapshotSchema', () => {
         origin: 'manual',
       }],
     }],
+    predictionAvailability: { available: true, availableAfterCompletedWeeks: 4 },
     predictions: {
       predictor: 'settled-or-simulated',
       odds: [{ teamId: 'a', probability: 0.8 }],

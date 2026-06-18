@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Application\PredictionAvailability;
 use App\Application\SnapshotAssembler;
 use App\Domain\Evaluation\BrierScore;
 use App\Domain\Evaluation\EvaluationHarness;
@@ -66,6 +67,7 @@ class AppServiceProvider extends ServiceProvider
             $app->make(LeagueTable::class),
             $app->make(Ranking::class),
             $app->make(SettledOrSimulated::class),
+            $app->make(PredictionAvailability::class),
             self::LIVE_STRATEGY_KEY,
         ));
     }
