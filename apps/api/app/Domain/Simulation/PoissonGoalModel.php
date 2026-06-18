@@ -14,9 +14,13 @@ use App\Domain\Team\Team;
  */
 final readonly class PoissonGoalModel implements GoalModel
 {
+    public const float DEFAULT_BASE_GOALS = 1.35;
+
+    public const float DEFAULT_HOME_ADVANTAGE = 1.25;
+
     public function __construct(
-        private float $baseGoals = 1.35,
-        private float $homeAdvantage = 1.25,
+        private float $baseGoals = self::DEFAULT_BASE_GOALS,
+        private float $homeAdvantage = self::DEFAULT_HOME_ADVANTAGE,
     ) {
         Guard::positiveFloat($baseGoals, 'Base goals');
         Guard::positiveFloat($homeAdvantage, 'Home advantage');

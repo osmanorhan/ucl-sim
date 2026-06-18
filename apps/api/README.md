@@ -59,6 +59,7 @@ Useful config:
 - `LEAGUE_PREDICTION_ITERATIONS` controls live Monte Carlo prediction work.
 - `LEAGUE_EVALUATION_SCENARIOS` and `LEAGUE_EVALUATION_DRAWS` control evaluation cost.
 - `LEAGUE_MUTATION_RATE_LIMIT` and `LEAGUE_EVALUATION_RATE_LIMIT` control API throttles.
+- `LEAGUE_BASE_GOALS` and `LEAGUE_HOME_ADVANTAGE` tune the Poisson goal model (league baseline and home advantage); both fall back to the model's defaults.
 
 ## Test
 

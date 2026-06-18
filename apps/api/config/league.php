@@ -1,6 +1,7 @@
 <?php
 
 declare(strict_types=1);
+use App\Domain\Simulation\PoissonGoalModel;
 
 return [
     /*
@@ -16,6 +17,16 @@ return [
     'evaluation' => [
         'scenarios' => (int) env('LEAGUE_EVALUATION_SCENARIOS', 6),
         'ground_truth_draws' => (int) env('LEAGUE_EVALUATION_DRAWS', 400),
+    ],
+
+    /*
+     * Poisson goal-model knobs. Expected goals scale with the power ratio, lifted on the home
+     * side; tune the league baseline and home advantage rather than hard-coding them. Defaults
+     * mirror the Domain class so the pure model stays usable on its own.
+     */
+    'goal_model' => [
+        'base_goals' => (float) env('LEAGUE_BASE_GOALS', PoissonGoalModel::DEFAULT_BASE_GOALS),
+        'home_advantage' => (float) env('LEAGUE_HOME_ADVANTAGE', PoissonGoalModel::DEFAULT_HOME_ADVANTAGE),
     ],
 
     'rate_limits' => [

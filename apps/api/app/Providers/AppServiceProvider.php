@@ -52,7 +52,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        $this->app->bind(GoalModel::class, PoissonGoalModel::class);
+        $this->app->bind(GoalModel::class, fn (): GoalModel => new PoissonGoalModel(
+            $this->configFloat('league.goal_model.base_goals', PoissonGoalModel::DEFAULT_BASE_GOALS),
+            $this->configFloat('league.goal_model.home_advantage', PoissonGoalModel::DEFAULT_HOME_ADVANTAGE),
+        ));
         $this->app->bind(MatchSimulator::class, PoissonMatchSimulator::class);
         $this->app->bind(Ranking::class, PremierLeagueRanking::class);
         $this->app->bind(FixtureScheduler::class, BergerRoundRobinScheduler::class);
@@ -96,6 +99,13 @@ class AppServiceProvider extends ServiceProvider
         $configured = config($key);
 
         return is_int($configured) ? $configured : $default;
+    }
+
+    private function configFloat(string $key, float $default): float
+    {
+        $configured = config($key);
+
+        return is_float($configured) || is_int($configured) ? (float) $configured : $default;
     }
 
     private function rateLimitKey(Request $request): string
