@@ -104,13 +104,15 @@ describe('league workflow', () => {
       global: { plugins: [router] },
     })
 
+    await wrapper.get('#league-name').setValue('super LEAGUE')
+    await wrapper.get('input[id^="team-"][id$="-name"]').setValue('bayern MÜNCHEN')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
 
     expect(createLeague).toHaveBeenCalledWith(expect.objectContaining({
-      name: 'Champions League',
+      name: 'super LEAGUE',
       teams: expect.arrayContaining([
-        expect.objectContaining({ name: expect.any(String), power: expect.any(Number) }),
+        expect.objectContaining({ name: 'bayern MÜNCHEN', power: expect.any(Number) }),
       ]),
     }))
     expect(router.currentRoute.value.fullPath).toBe(simulationRoute('L1'))

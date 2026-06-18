@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import MatchEditor from '../molecules/MatchEditor.vue'
 import { weekState } from '../../domain/league'
+import { titleCase } from '../../domain/text'
 import type { Match, Standing, WeekFixtures } from '../../types/league'
 import { weekPresentation } from './weekPresentation'
 
@@ -18,7 +19,7 @@ const emit = defineEmits<{
 const teamNames = computed(() => new Map(props.standings.map((team) => [team.teamId, team.name])))
 
 function teamName(id: string): string {
-  return teamNames.value.get(id) ?? id
+  return titleCase(teamNames.value.get(id) ?? id)
 }
 
 function save(match: Match, homeGoals: number, awayGoals: number) {

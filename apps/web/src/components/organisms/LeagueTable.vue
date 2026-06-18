@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { titleCase } from '../../domain/text'
 import type { Standing } from '../../types/league'
 
 defineProps<{ standings: Standing[] }>()
@@ -28,7 +29,7 @@ defineProps<{ standings: Standing[] }>()
       <tbody>
         <tr v-for="standing in standings" :key="standing.teamId">
           <td class="rank-cell">{{ standing.position }}</td>
-          <td class="team-cell">{{ standing.name }}</td>
+          <td class="team-cell">{{ titleCase(standing.name) }}</td>
           <td>{{ standing.played }}</td>
           <td>{{ standing.won }}</td>
           <td>{{ standing.drawn }}</td>

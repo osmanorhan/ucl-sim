@@ -8,6 +8,7 @@ import FixturesByWeek from '../components/organisms/FixturesByWeek.vue'
 import LeagueTable from '../components/organisms/LeagueTable.vue'
 import PredictionPanel from '../components/organisms/PredictionPanel.vue'
 import { LeagueAction } from '../domain/league'
+import { titleCase } from '../domain/text'
 import { useSimulationViewModel } from '../viewModels/simulationViewModel'
 
 const props = defineProps<{ leagueId: string }>()
@@ -33,7 +34,7 @@ onMounted(() => {
 
 <template>
   <AppLayout
-    :title="snapshot?.league.name ?? 'Champions League'"
+    :title="snapshot ? titleCase(snapshot.league.name) : 'Champions League'"
     :subtitle="snapshot ? `Week ${snapshot.league.currentWeek} of ${snapshot.league.totalWeeks} · Seed ${snapshot.league.seed}` : 'Loading league'"
     :error="error"
   >

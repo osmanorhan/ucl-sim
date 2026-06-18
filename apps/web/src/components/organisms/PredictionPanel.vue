@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { titleCase } from '../../domain/text'
 import type { PredictionAvailability, PredictionSet, Standing } from '../../types/league'
 
 defineProps<{
@@ -8,7 +9,7 @@ defineProps<{
 }>()
 
 function teamName(standings: Standing[], id: string): string {
-  return standings.find((team) => team.teamId === id)?.name ?? id
+  return titleCase(standings.find((team) => team.teamId === id)?.name ?? id)
 }
 </script>
 
