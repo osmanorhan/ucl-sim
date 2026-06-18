@@ -96,6 +96,12 @@ php artisan migrate
 php artisan serve                 # http://localhost:8000  (API under /api)
 ```
 
+Docker local dev:
+
+```bash
+docker compose up --build         # API image on :8080, Vite web on :5173
+```
+
 ---
 
 ## API surface

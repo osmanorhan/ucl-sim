@@ -36,7 +36,7 @@ eval: ## Run the strategy evaluation harness
 lint: ## Format check (Pint)
 	composer -d $(API) lint
 
-up: ## Run the production image locally (docker compose) on :8080
+up: ## Run local Docker stack: API on :8080, Vite web on :5173
 	docker compose up --build
 
 deploy: ## Deploy the live link to Fly.io

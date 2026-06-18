@@ -16,5 +16,20 @@ services:
     volumes:
       - sqlite:/data
 
+  web:
+    build:
+      context: .
+      dockerfile: infra/web.Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_PROXY_TARGET: http://app:8080
+    volumes:
+      - ./apps/web:/web
+      - web_node_modules:/web/node_modules
+    depends_on:
+      - app
+
 volumes:
   sqlite:
+  web_node_modules:
