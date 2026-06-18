@@ -54,6 +54,7 @@
             "@php artisan config:clear --ansi",
             "XDEBUG_MODE=coverage ./vendor/bin/pest --coverage --coverage-clover=coverage/clover.xml"
         ],
+        "test:mutation": "XDEBUG_MODE=coverage pest --testsuite=Unit --mutate --covered-only --min=75 --class=App\\\\Domain",
         "test:arch": "pest --group=arch",
         "stan": "phpstan analyse --no-progress --memory-limit=1G",
         "lint": "pint --test",

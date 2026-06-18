@@ -322,7 +322,7 @@ and is represented instead as e.g. 90-vs-45. A model that ingests *any* range (e
 4. **Architecture fitness** — Pest arch test (or Deptrac): `app/Domain` may not import
    `Illuminate\*`. Purity boundary enforced by CI, not discipline.
 5. **Static analysis** — PHPStan/Larastan **level max**; Pint formatting.
-6. **Mutation** — Infection on the domain layer to prove the suite has teeth.
+6. **Mutation** — Pest mutation testing on the domain layer to prove the suite has teeth.
 7. **Feature/API** — Laravel feature tests over the REST endpoints.
 8. **Frontend** — Vitest + Vue Test Utils (components/store), Playwright E2E for
    play-week / play-all / edit-recompute / prediction flows.
@@ -369,7 +369,7 @@ validate input.
 
 - **Docker** multi-stage (PHP-FPM + built Vite assets); `docker-compose` for local dev with a
   seeded demo league.
-- **GitHub Actions**: `Pint → PHPStan(max) → Pest → Infection → Vitest → Playwright → build →
+- **GitHub Actions**: `Pint → PHPStan(max) → Pest → mutation testing → Vitest → Playwright → build →
   deploy`. Branch protected on green.
 - **Fly.io** deploy with SQLite volume; seed logged so the live demo is reproducible.
 - **SQLite hardening (ADR 02):** WAL journal mode + `busy_timeout=5000` on the connection;

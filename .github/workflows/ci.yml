@@ -126,6 +126,7 @@ jobs:
 
       - run: composer -d apps/api install --no-interaction --no-progress --prefer-dist
       - run: pnpm -C apps/web install --frozen-lockfile
+      - run: composer -d apps/api test:mutation
       - run: composer -d apps/api test:coverage
       - run: pnpm -C apps/web test:coverage
 
