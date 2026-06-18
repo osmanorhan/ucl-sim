@@ -64,7 +64,7 @@ final readonly class EvaluationHarness
 
     /**
      * @param  Scenario[]  $scenarios
-     * @param  array<int, string[]>  $truth
+     * @param  array<int, array<string, int>>  $truth  per scenario, champion id => times realised
      */
     private function scoreOne(string $label, ChampionPredictor $predictor, array $scenarios, array $truth): StrategyScorecard
     {
@@ -81,10 +81,10 @@ final readonly class EvaluationHarness
             );
             $latencyNs += hrtime(true) - $start;
 
-            foreach ($truth[$i] as $champion) {
-                $brierTotal += $this->brier->score($forecast, $champion);
-                $logLossTotal += $this->logLoss->score($forecast, $champion);
-                $samples++;
+            foreach ($truth[$i] as $champion => $count) {
+                $brierTotal += $count * $this->brier->score($forecast, $champion);
+                $logLossTotal += $count * $this->logLoss->score($forecast, $champion);
+                $samples += $count;
             }
         }
 
@@ -97,18 +97,25 @@ final readonly class EvaluationHarness
         );
     }
 
-    /** @return string[] */
+    /**
+     * The realised champions collapse to a frequency table: the score of a forecast against an
+     * outcome depends only on which team won, not which draw it was, so a predictor is graded once
+     * per distinct champion and weighted by its count rather than re-scored on every identical draw.
+     *
+     * @return array<string, int> champion id => times realised across the draws
+     */
     private function groundTruth(Scenario $scenario, int $draws): array
     {
         $sampler = $this->reference->compile($scenario->teams, $scenario->played, $scenario->remaining);
         $random = new SeededRandomSource($scenario->seed + self::GROUND_TRUTH_OFFSET);
 
-        $champions = [];
+        $counts = [];
         for ($i = 0; $i < $draws; $i++) {
-            $champions[] = $sampler->draw($random);
+            $champion = $sampler->draw($random);
+            $counts[$champion] = ($counts[$champion] ?? 0) + 1;
         }
 
-        return $champions;
+        return $counts;
     }
 
     /**
