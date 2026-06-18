@@ -32,7 +32,8 @@ final readonly class DeterministicClincher implements ChampionPredictor
         $rivalBest = $this->rivalBest($points);
 
         $contenders = [];
-        foreach ($points as $id => $current) {
+        foreach ($teams as $team) {
+            $id = $team->id;
             if ($ceiling[$id] >= $rivalBest($id)) {
                 $contenders[$id] = true;
             }
@@ -40,10 +41,12 @@ final readonly class DeterministicClincher implements ChampionPredictor
 
         $share = 1.0 / count($contenders);
 
-        return new ChampionProbabilities(array_map(
-            static fn (Team $team): float => isset($contenders[$team->id]) ? $share : 0.0,
-            array_combine(array_map(static fn (Team $t): string => $t->id, $teams), $teams),
-        ));
+        $probabilities = [];
+        foreach ($teams as $team) {
+            $probabilities[$team->id] = isset($contenders[$team->id]) ? $share : 0.0;
+        }
+
+        return new ChampionProbabilities($probabilities);
     }
 
     /**

@@ -88,6 +88,16 @@ it('collapses a clinched title to a certainty and eliminates the rest', function
         ->and($odds->for('d'))->toBe(0.0);
 });
 
+it('handles numeric string team identifiers', function () {
+    $teams = [team('1'), team('2'), team('3'), team('4')];
+    $remaining = (new BergerRoundRobinScheduler)->schedule($teams);
+
+    $odds = clincher()->predict($teams, [], $remaining, new SeededRandomSource(1));
+
+    expect($odds->for('1'))->toBe(0.25)
+        ->and($odds->for('4'))->toBe(0.25);
+});
+
 it('produces a Monte Carlo distribution that sums to one', function () {
     $teams = [team('a'), team('b'), team('c'), team('d')];
     $remaining = (new BergerRoundRobinScheduler)->schedule($teams);
