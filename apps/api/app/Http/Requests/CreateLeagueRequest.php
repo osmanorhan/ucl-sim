@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use LogicException;
 
@@ -21,21 +20,19 @@ class CreateLeagueRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'seed' => ['required', 'integer'],
-            'teams' => ['required', 'array', 'min:2'],
+            'teams' => ['required', 'array', 'size:4'],
             'teams.*.id' => ['required', 'string', 'max:64', 'distinct'],
             'teams.*.name' => ['required', 'string', 'max:255'],
             'teams.*.power' => ['required', 'numeric', 'gt:0'],
         ];
     }
 
-    public function withValidator(Validator $validator): void
+    /** @return array<string, string> */
+    public function messages(): array
     {
-        $validator->after(function (Validator $validator): void {
-            $teams = $this->input('teams');
-            if (is_array($teams) && count($teams) % 2 !== 0) {
-                $validator->errors()->add('teams', 'A round-robin schedule requires an even number of teams.');
-            }
-        });
+        return [
+            'teams.size' => 'A Champions League group has exactly four teams.',
+        ];
     }
 
     public function leagueName(): string

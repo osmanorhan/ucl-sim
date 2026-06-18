@@ -10,16 +10,8 @@ export const TeamInputSchema = z.object({
 export const CreateLeaguePayloadSchema = z.object({
   name: z.string().min(1, 'League name is required.').max(255, 'League name must be 255 characters or fewer.'),
   seed: z.number().int('Seed must be an integer.'),
-  teams: z.array(TeamInputSchema).min(2, 'At least two teams are required.'),
+  teams: z.array(TeamInputSchema).length(4, 'A Champions League group has exactly four teams.'),
 }).superRefine((payload, context) => {
-  if (payload.teams.length % 2 !== 0) {
-    context.addIssue({
-      code: 'custom',
-      path: ['teams'],
-      message: 'A round-robin schedule requires an even number of teams.',
-    })
-  }
-
   const ids = new Set<string>()
   payload.teams.forEach((team, index) => {
     if (ids.has(team.id)) {

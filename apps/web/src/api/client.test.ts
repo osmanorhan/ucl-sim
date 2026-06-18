@@ -31,11 +31,11 @@ describe('api client errors', () => {
       status: 422,
       statusText: 'Unprocessable Entity',
       json: async () => ({
-        errors: { teams: ['Provide an even number of teams.'], name: ['The name is required.'] },
+        errors: { teams: ['A Champions League group has exactly four teams.'], name: ['The name is required.'] },
       }),
     }))
 
-    await expect(getLeague('L1')).rejects.toThrow('Provide an even number of teams. The name is required.')
+    await expect(getLeague('L1')).rejects.toThrow('A Champions League group has exactly four teams. The name is required.')
   })
 
   it('reports a clean message instead of leaking validation detail on a malformed success body', async () => {

@@ -67,7 +67,7 @@ function fieldErrors(error: z.ZodError): Record<string, string> {
     <section class="create-section">
       <div class="section-head">
         <h2>Teams</h2>
-        <p>Power drives the simulator; higher is stronger.</p>
+        <p>A Champions League group has four teams. Power drives the simulator; higher is stronger.</p>
       </div>
 
       <div class="team-grid">

@@ -155,11 +155,15 @@ it('returns 404 for an unknown league and 409 once the season is complete', func
     $this->postJson("/api/leagues/{$id}/play-all")->assertStatus(409);
 });
 
-it('rejects a league with an odd number of teams', function () {
-    $payload = leaguePayload();
-    array_pop($payload['teams']);
+it('rejects a league that is not exactly four teams', function () {
+    $tooFew = leaguePayload();
+    array_pop($tooFew['teams']);
+    $this->postJson(LEAGUES_URL, $tooFew)->assertStatus(422)->assertJsonValidationErrors('teams');
 
-    $this->postJson(LEAGUES_URL, $payload)->assertStatus(422)->assertJsonValidationErrors('teams');
+    $tooMany = leaguePayload();
+    $tooMany['teams'][] = ['id' => 'e', 'name' => 'Echo', 'power' => 50.0];
+    $tooMany['teams'][] = ['id' => 'f', 'name' => 'Foxtrot', 'power' => 40.0];
+    $this->postJson(LEAGUES_URL, $tooMany)->assertStatus(422)->assertJsonValidationErrors('teams');
 });
 
 it('renders unexpected failures as a safe message without leaking a stack trace, even in debug', function () {

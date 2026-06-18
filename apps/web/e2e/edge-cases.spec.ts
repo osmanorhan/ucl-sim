@@ -38,19 +38,16 @@ test('a contract-breaking response fails at the boundary, not deep in a componen
   await expect(page.getByRole('heading', { name: 'Standings' })).toBeVisible()
 })
 
-test('the create form blocks an odd squad before any request is sent', async ({ page }) => {
+test('the create form presents a fixed four-team group, not an editable squad list', async ({ page }) => {
   await installApi(page)
 
-  let postedCreate = false
-  page.on('request', (request) => {
-    if (request.method() === 'POST' && request.url().endsWith('/api/leagues')) postedCreate = true
-  })
-
   await page.goto('/')
-  await page.getByRole('button', { name: 'Remove Delta' }).click()
+
+  await expect(page.locator('.team-row')).toHaveCount(4)
+  await expect(page.getByRole('button', { name: /Remove|Add team/ })).toHaveCount(0)
+
   await page.getByRole('button', { name: 'Create league' }).click()
 
-  await expect(page.getByText('even number of teams', { exact: false })).toBeVisible()
-  await expect(page).toHaveURL(/\/leagues\/create$/)
-  expect(postedCreate).toBe(false)
+  await expect(page).toHaveURL(/\/leagues\/L1\/simulation$/)
+  await expect(page.getByRole('row', { name: /Alpha/ })).toBeVisible()
 })
