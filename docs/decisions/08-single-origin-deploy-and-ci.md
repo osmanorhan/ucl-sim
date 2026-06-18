@@ -14,7 +14,11 @@ Laravel's `public/`; one FrankenPHP process serves assets directly and routes th
 `index.php`.
 
 - **Same origin removes CORS.** The client is built with `VITE_API_BASE_URL=""` and calls `/api/*`
-  relative — no preflight, no second hostname.
+  relative — no preflight, no second hostname. Same-origin is also the *default*: `client.ts` falls
+  back to `""` when the var is unset, so a forgotten env in a preview/deploy variant degrades to the
+  correct production behaviour, never to a hard-coded `localhost`. Dev keeps zero-config by proxying
+  `/api` from the Vite server to the local API (`VITE_API_PROXY_TARGET`, default `127.0.0.1:8000`),
+  so the SPA speaks same-origin everywhere and only an explicit cross-origin build opts out.
 - **Laravel owns SPA routing via one fallback** (`routes/web.php`): `/` and non-`api/*` paths return
   `index.html`; unknown `/api/*` still 404s as JSON.
 - **Environment-agnostic image.** Only build-inlined (`VITE_API_BASE_URL`) and the listen contract

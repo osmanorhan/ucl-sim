@@ -10,7 +10,7 @@ describe('api client errors', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Load failed')))
 
     await expect(getLeague('L1')).rejects.toThrow(
-      'API server is not reachable. Check that it is running at http://127.0.0.1:8000.',
+      'API server is not reachable. Check that it is running at the same origin.',
     )
   })
 

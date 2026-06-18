@@ -11,8 +11,9 @@ import {
   UpdateMatchPayloadSchema,
 } from '../validation/leagueSchemas'
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
-const unavailableMessage = `API server is not reachable. Check that it is running at ${baseUrl}.`
+const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
+const apiTarget = baseUrl === '' ? 'the same origin' : baseUrl
+const unavailableMessage = `API server is not reachable. Check that it is running at ${apiTarget}.`
 const malformedMessage = 'Received an unexpected response from the server.'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT'
