@@ -62,12 +62,10 @@ defineProps<{
   .route-header {
     display: grid;
   }
-}
 
-@media (max-width: 760px) {
   .route-actions {
-    display: grid;
-    grid-template-columns: 1fr;
+    flex-wrap: wrap;
+    width: 100%;
   }
 }
 </style>

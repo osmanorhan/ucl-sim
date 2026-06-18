@@ -104,11 +104,16 @@ onMounted(() => {
 }
 
 .text-button {
-  border: 0;
-  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0.42rem 0.65rem;
   background: transparent;
   color: var(--primary);
   font-weight: 700;
+}
+
+.text-button:hover {
+  color: var(--primary-strong);
 }
 
 @media (max-width: 1180px) {
