@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 
 const LEAGUES_URL = '/api/leagues';
 
@@ -158,4 +160,48 @@ it('rejects a league with an odd number of teams', function () {
     array_pop($payload['teams']);
 
     $this->postJson(LEAGUES_URL, $payload)->assertStatus(422)->assertJsonValidationErrors('teams');
+});
+
+it('renders unexpected failures as a safe message without leaking a stack trace, even in debug', function () {
+    config(['app.debug' => true]);
+
+    Route::get('/api/_boom', fn () => throw new RuntimeException('Database connection refused at 10.0.0.1.'));
+
+    $response = $this->getJson('/api/_boom')->assertStatus(500);
+
+    $response->assertExactJson(['message' => 'An unexpected error occurred. Please try again later.']);
+    expect(array_keys($response->json()))->not->toContain('exception', 'file', 'line', 'trace');
+});
+
+it('renders handled HTTP errors without a stack trace in debug', function () {
+    config(['app.debug' => true]);
+
+    $id = createLeague();
+
+    $response = $this->getJson("/api/leagues/{$id}/predictions")->assertStatus(409);
+
+    expect(array_keys($response->json()))->not->toContain('exception', 'file', 'line', 'trace');
+});
+
+it('logs an unexpected failure once, with request context', function () {
+    Log::spy();
+
+    Route::get('/api/_boom', fn () => throw new RuntimeException('boom'));
+
+    $this->getJson('/api/_boom')->assertStatus(500);
+
+    Log::shouldHaveReceived('error')
+        ->once()
+        ->withArgs(fn (string $message, array $context) => $message === 'boom'
+            && $context['method'] === 'GET'
+            && $context['path'] === 'api/_boom'
+            && $context['exception'] instanceof RuntimeException);
+});
+
+it('does not log expected domain exceptions as errors', function () {
+    Log::spy();
+
+    $this->getJson('/api/leagues/missing')->assertStatus(404);
+
+    Log::shouldNotHaveReceived('error');
 });

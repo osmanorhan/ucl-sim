@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type {
   CreateLeaguePayload,
   EvaluationResult,
@@ -11,6 +12,8 @@ import {
 } from '../validation/leagueSchemas'
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
+const unavailableMessage = `API server is not reachable. Check that it is running at ${baseUrl}.`
+const malformedMessage = 'Received an unexpected response from the server.'
 
 type HttpMethod = 'GET' | 'POST' | 'PUT'
 
@@ -20,22 +23,22 @@ type RequestOptions = {
 }
 
 export async function createLeague(payload: CreateLeaguePayload): Promise<LeagueSnapshot> {
-  return LeagueSnapshotSchema.parse(await request('/api/leagues', {
+  return decode(LeagueSnapshotSchema, await request('/api/leagues', {
     method: 'POST',
     body: CreateLeaguePayloadSchema.parse(payload),
   }))
 }
 
 export async function getLeague(id: string): Promise<LeagueSnapshot> {
-  return LeagueSnapshotSchema.parse(await request(`/api/leagues/${id}`))
+  return decode(LeagueSnapshotSchema, await request(`/api/leagues/${id}`))
 }
 
 export async function playWeek(id: string): Promise<LeagueSnapshot> {
-  return LeagueSnapshotSchema.parse(await request(`/api/leagues/${id}/play-week`, { method: 'POST' }))
+  return decode(LeagueSnapshotSchema, await request(`/api/leagues/${id}/play-week`, { method: 'POST' }))
 }
 
 export async function playAll(id: string): Promise<LeagueSnapshot> {
-  return LeagueSnapshotSchema.parse(await request(`/api/leagues/${id}/play-all`, { method: 'POST' }))
+  return decode(LeagueSnapshotSchema, await request(`/api/leagues/${id}/play-all`, { method: 'POST' }))
 }
 
 export async function updateMatch(
@@ -43,30 +46,46 @@ export async function updateMatch(
   homeGoals: number,
   awayGoals: number,
 ): Promise<LeagueSnapshot> {
-  return LeagueSnapshotSchema.parse(await request(`/api/matches/${id}`, {
+  return decode(LeagueSnapshotSchema, await request(`/api/matches/${id}`, {
     method: 'PUT',
     body: UpdateMatchPayloadSchema.parse({ homeGoals, awayGoals }),
   }))
 }
 
 export async function getEvaluation(id: string): Promise<EvaluationResult> {
-  return EvaluationResultSchema.parse(await request(`/api/leagues/${id}/evaluation`))
+  return decode(EvaluationResultSchema, await request(`/api/leagues/${id}/evaluation`))
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const response = await fetch(`${baseUrl}${path}`, {
-    method: options.method ?? 'GET',
-    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
-  })
+  let response: Response
+
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      method: options.method ?? 'GET',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    })
+  } catch (error) {
+    throw new Error(unavailableMessage, { cause: error })
+  }
 
   const payload = await response.json().catch(() => null)
 
   if (!response.ok) {
-    throw new Error(errorMessage(payload, response.statusText))
+    throw new Error(errorMessage(payload, response.statusText || `Request failed with status ${response.status}.`))
   }
 
   return payload as T
+}
+
+function decode<T>(schema: z.ZodType<T>, payload: unknown): T {
+  const result = schema.safeParse(payload)
+
+  if (!result.success) {
+    throw new Error(malformedMessage, { cause: result.error })
+  }
+
+  return result.data
 }
 
 function errorMessage(payload: unknown, fallback: string): string {
