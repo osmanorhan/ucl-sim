@@ -8,6 +8,8 @@ use App\Domain\Support\Guard;
 
 final readonly class MatchResult
 {
+    public const MAX_GOALS = 30;
+
     public function __construct(
         public string $homeTeamId,
         public string $awayTeamId,
@@ -17,6 +19,8 @@ final readonly class MatchResult
         Guard::distinct($homeTeamId, $awayTeamId, 'A match cannot be between a team and itself.');
         Guard::nonNegative($homeGoals, 'Home goals');
         Guard::nonNegative($awayGoals, 'Away goals');
+        Guard::atMost($homeGoals, self::MAX_GOALS, 'Home goals');
+        Guard::atMost($awayGoals, self::MAX_GOALS, 'Away goals');
     }
 
     public function isDraw(): bool

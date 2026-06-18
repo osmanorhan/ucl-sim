@@ -29,6 +29,13 @@ final class Guard
         }
     }
 
+    public static function atMost(int $value, int $max, string $field): void
+    {
+        if ($value > $max) {
+            throw new InvalidArgumentException("{$field} cannot exceed {$max}.");
+        }
+    }
+
     public static function positiveFloat(float $value, string $field): void
     {
         if ($value <= 0.0) {

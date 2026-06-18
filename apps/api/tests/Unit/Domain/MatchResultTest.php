@@ -45,3 +45,11 @@ it('rejects a match of a team against itself', function () {
 it('rejects negative goals', function () {
     new MatchResult('a', 'b', -1, 0);
 })->throws(InvalidArgumentException::class);
+
+it('accepts goals at the maximum', function () {
+    expect((new MatchResult('a', 'b', MatchResult::MAX_GOALS, 0))->homeGoals)->toBe(MatchResult::MAX_GOALS);
+});
+
+it('rejects goals above the maximum', function () {
+    new MatchResult('a', 'b', MatchResult::MAX_GOALS + 1, 0);
+})->throws(InvalidArgumentException::class);

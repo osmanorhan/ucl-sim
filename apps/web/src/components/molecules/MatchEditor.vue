@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import AppButton from '../atoms/AppButton.vue'
 import { isManualResult } from '../../domain/league'
 import type { Match } from '../../types/league'
-import { UpdateMatchPayloadSchema } from '../../validation/leagueSchemas'
+import { MAX_GOALS, UpdateMatchPayloadSchema } from '../../validation/leagueSchemas'
 
 const props = defineProps<{
   match: Match
@@ -57,6 +57,7 @@ function save(event: Event) {
           name="homeGoals"
           type="number"
           min="0"
+          :max="MAX_GOALS"
           :title="`${homeName} goals`"
           :value="match.homeGoals ?? 0"
         >
@@ -72,6 +73,7 @@ function save(event: Event) {
           name="awayGoals"
           type="number"
           min="0"
+          :max="MAX_GOALS"
           :title="`${awayName} goals`"
           :value="match.awayGoals ?? 0"
         >

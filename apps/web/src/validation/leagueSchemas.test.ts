@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   CreateLeaguePayloadSchema,
   LeagueSnapshotSchema,
+  MAX_GOALS,
+  MAX_POWER,
   UpdateMatchPayloadSchema,
 } from './leagueSchemas'
 
@@ -35,6 +37,17 @@ describe('CreateLeaguePayloadSchema', () => {
     expect(result.error?.issues.some((issue) => issue.path.join('.') === 'teams')).toBe(true)
   })
 
+  it('rejects team power above the maximum', () => {
+    const result = CreateLeaguePayloadSchema.safeParse({
+      name: 'Champions League',
+      seed: 1,
+      teams: teams(4).map((team, index) => (index === 0 ? { ...team, power: MAX_POWER + 1 } : team)),
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues.some((issue) => issue.path.join('.') === 'teams.0.power')).toBe(true)
+  })
+
   it('rejects duplicate team ids on the offending row', () => {
     const result = CreateLeaguePayloadSchema.safeParse({
       name: 'Champions League',
@@ -58,6 +71,11 @@ describe('UpdateMatchPayloadSchema', () => {
   it('rejects negative and fractional scores', () => {
     expect(UpdateMatchPayloadSchema.safeParse({ homeGoals: -1, awayGoals: 0 }).success).toBe(false)
     expect(UpdateMatchPayloadSchema.safeParse({ homeGoals: 1.5, awayGoals: 0 }).success).toBe(false)
+  })
+
+  it('accepts scores at the maximum but rejects scores above it', () => {
+    expect(UpdateMatchPayloadSchema.safeParse({ homeGoals: MAX_GOALS, awayGoals: 0 }).success).toBe(true)
+    expect(UpdateMatchPayloadSchema.safeParse({ homeGoals: MAX_GOALS + 1, awayGoals: 0 }).success).toBe(false)
   })
 })
 

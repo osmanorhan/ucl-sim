@@ -9,6 +9,7 @@ use App\Domain\League\ResultOrigin;
 use App\Domain\League\ScheduledMatch;
 use App\Domain\Persistence\LeagueRepository;
 use App\Domain\Persistence\StaleLeagueState;
+use App\Domain\Team\PowerRating;
 use App\Models\MatchRecord;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -179,6 +180,16 @@ it('rejects editing a match before it has been played', function () {
         ->assertStatus(409);
 });
 
+it('rejects edits with goals above the maximum', function () {
+    $id = createLeague();
+    $snapshot = $this->postJson("/api/leagues/{$id}/play-all")->json();
+    $match = $snapshot['fixtures'][0]['matches'][0];
+
+    $this->putJson("/api/matches/{$match['id']}", ['homeGoals' => MatchResult::MAX_GOALS + 1, 'awayGoals' => 0])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('homeGoals');
+});
+
 it('keeps predictions hidden until four weeks are complete', function () {
     $id = createLeague();
 
@@ -242,6 +253,12 @@ it('rejects a league that is not exactly four teams', function () {
     $tooMany['teams'][] = ['id' => 'e', 'name' => 'Echo', 'power' => 50.0];
     $tooMany['teams'][] = ['id' => 'f', 'name' => 'Foxtrot', 'power' => 40.0];
     $this->postJson(LEAGUES_URL, $tooMany)->assertStatus(422)->assertJsonValidationErrors('teams');
+});
+
+it('rejects team power above the maximum', function () {
+    $overpowered = leaguePayload();
+    $overpowered['teams'][0]['power'] = PowerRating::MAX + 1;
+    $this->postJson(LEAGUES_URL, $overpowered)->assertStatus(422)->assertJsonValidationErrors('teams.0.power');
 });
 
 it('rejects free-text inputs carrying html or markup', function () {

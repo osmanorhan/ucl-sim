@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Domain\Team\PowerRating;
 use App\Rules\PlainText;
 use Illuminate\Foundation\Http\FormRequest;
 use LogicException;
@@ -24,7 +25,7 @@ class CreateLeagueRequest extends FormRequest
             'teams' => ['required', 'array', 'size:4'],
             'teams.*.id' => ['required', 'string', 'max:64', 'distinct', 'alpha_dash:ascii'],
             'teams.*.name' => ['required', 'string', 'max:255', new PlainText],
-            'teams.*.power' => ['required', 'numeric', 'gt:0'],
+            'teams.*.power' => ['required', 'numeric', 'gt:0', 'max:'.PowerRating::MAX],
         ];
     }
 

@@ -1,10 +1,12 @@
 import { z } from 'zod'
 import { ResultOrigin } from '../domain/league'
 
+export const MAX_POWER = 100
+
 export const TeamInputSchema = z.object({
   id: z.string().min(1, 'Team id is required.').max(64, 'Team id must be 64 characters or fewer.'),
   name: z.string().min(1, 'Team name is required.').max(255, 'Team name must be 255 characters or fewer.'),
-  power: z.number().positive('Power must be greater than 0.'),
+  power: z.number().positive('Power must be greater than 0.').max(MAX_POWER, `Power cannot exceed ${MAX_POWER}.`),
 })
 
 export const CreateLeaguePayloadSchema = z.object({
@@ -26,13 +28,17 @@ export const CreateLeaguePayloadSchema = z.object({
   })
 })
 
+export const MAX_GOALS = 30
+
 export const UpdateMatchPayloadSchema = z.object({
   homeGoals: z.number()
     .int('Goals must be whole numbers.')
-    .min(0, 'Goals cannot be negative.'),
+    .min(0, 'Goals cannot be negative.')
+    .max(MAX_GOALS, `Goals cannot exceed ${MAX_GOALS}.`),
   awayGoals: z.number()
     .int('Goals must be whole numbers.')
-    .min(0, 'Goals cannot be negative.'),
+    .min(0, 'Goals cannot be negative.')
+    .max(MAX_GOALS, `Goals cannot exceed ${MAX_GOALS}.`),
 })
 
 export const LeagueSnapshotSchema = z.object({
