@@ -25,7 +25,7 @@ sequenceDiagram
   Repo->>DB: one transaction
   App-->>API: snapshot
   API-->>UI: { version, league, table, fixtures, predictions }
-  UI->>UI: discard older version; atomically apply newest snapshot
+  UI->>UI: discard older version, atomically apply newest snapshot
 ```
 
 Mutations return one snapshot from one server state. The SPA applies it atomically and ignores older
