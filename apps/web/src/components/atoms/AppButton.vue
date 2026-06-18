@@ -15,3 +15,24 @@ withDefaults(defineProps<{
     <slot />
   </button>
 </template>
+
+<style scoped>
+.button {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.42rem 0.65rem;
+  background: var(--surface-subtle);
+  color: var(--text);
+  font-weight: 650;
+}
+
+.button.primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.button.primary:hover:not(:disabled) {
+  background: var(--primary-strong);
+}
+</style>

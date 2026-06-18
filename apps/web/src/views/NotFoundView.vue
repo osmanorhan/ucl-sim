@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import AppButton from '../components/atoms/AppButton.vue'
 import { createLeagueRoute } from '../router'
 
 const router = useRouter()
@@ -11,7 +12,7 @@ const router = useRouter()
       <div class="panel-head">
         <h1>Not found</h1>
       </div>
-      <button class="button primary" type="button" @click="router.push(createLeagueRoute)">Create league</button>
+      <AppButton variant="primary" type="button" @click="router.push(createLeagueRoute)">Create league</AppButton>
     </section>
   </main>
 </template>

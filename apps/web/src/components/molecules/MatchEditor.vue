@@ -95,3 +95,125 @@ function save(event: Event) {
     <span class="match-error">{{ error }}</span>
   </article>
 </template>
+
+<style scoped>
+.match {
+  display: grid;
+  gap: 0.15rem;
+  border-top: 1px solid var(--border);
+  padding: 0.7rem 0;
+}
+
+.match:first-of-type {
+  border-top: 0;
+  padding-top: 0.15rem;
+}
+
+.match-line {
+  display: grid;
+  grid-template-columns: 0.75rem minmax(5rem, 1fr) 3rem auto 3rem minmax(5rem, 1fr) 5.5rem;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.match-line.scheduled {
+  grid-template-columns: 0.75rem minmax(5rem, 1fr) 3rem minmax(5rem, 1fr) 5.5rem;
+  color: var(--muted);
+}
+
+.team-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-name.home {
+  text-align: right;
+}
+
+.team-name.away {
+  text-align: left;
+}
+
+.score-separator {
+  text-align: center;
+  font-weight: 800;
+}
+
+.score-field {
+  display: block;
+}
+
+.score-input {
+  min-height: 2rem;
+  padding: 0.3rem 0.25rem;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  display: inline-flex;
+  justify-content: center;
+  width: max-content;
+  max-width: 100%;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge.pending {
+  background: var(--pending);
+}
+
+.manual-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--manual);
+}
+
+.manual-dot-spacer {
+  width: 0.55rem;
+  height: 0.55rem;
+}
+
+.match-error {
+  grid-column: 1 / -1;
+  min-height: 0.9rem;
+  color: var(--danger);
+  font-size: 0.72rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+  .match {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .match-line {
+    grid-template-columns: 0.75rem minmax(0, 1fr) 3rem auto 3rem minmax(0, 1fr);
+  }
+
+  .match-line :deep(.button) {
+    grid-column: 2 / -1;
+  }
+}
+</style>

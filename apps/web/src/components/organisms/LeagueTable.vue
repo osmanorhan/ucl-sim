@@ -42,3 +42,13 @@ defineProps<{ standings: Standing[] }>()
     </table>
   </section>
 </template>
+
+<style scoped>
+.team-heading {
+  text-align: left;
+}
+
+.rank-cell {
+  font-weight: 800;
+}
+</style>

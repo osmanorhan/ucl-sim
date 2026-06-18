@@ -39,3 +39,31 @@ function teamName(standings: Standing[], id: string): string {
     </div>
   </section>
 </template>
+
+<style scoped>
+.predictions {
+  min-width: 0;
+}
+
+.panel-note {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.inline-code {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.odds-list,
+.odd-row {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.odd-row > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+</style>

@@ -55,3 +55,41 @@ function weekView(week: WeekFixtures) {
     </article>
   </section>
 </template>
+
+<style scoped>
+.fixtures {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(22rem, 1fr));
+}
+
+.week {
+  border-left-width: 4px;
+}
+
+.week-complete {
+  border-left-color: var(--primary);
+  background: color-mix(in srgb, var(--primary), #fff 96%);
+}
+
+.week-partial {
+  border-left-color: var(--simulated);
+}
+
+.week-pending {
+  border-left-color: var(--border);
+  background: color-mix(in srgb, var(--pending), #fff 96%);
+}
+
+.week-state {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+@media (max-width: 980px) {
+  .fixtures {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

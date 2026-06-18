@@ -117,4 +117,11 @@ const badgeColor = computed(() => {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
   cursor: pointer;
 }
+
+.field-error {
+  min-height: 1rem;
+  color: var(--danger);
+  font-size: 0.72rem;
+  line-height: 1;
+}
 </style>

@@ -147,6 +147,13 @@ function fieldErrors(error: z.ZodError): Record<string, string> {
   align-items: start;
 }
 
+.field-error {
+  min-height: 1rem;
+  color: var(--danger);
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
 @media (max-width: 980px) {
   .create-form,
   .team-row {
