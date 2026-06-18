@@ -68,6 +68,15 @@ it('reports zero for a team it has never heard of', function () {
     expect((new ChampionProbabilities(['a' => 1.0]))->for('ghost'))->toBe(0.0);
 });
 
+it('exposes numeric string team identifiers without relying on array keys', function () {
+    $odds = new ChampionProbabilities(['1' => 0.6, '2' => 0.4]);
+
+    expect($odds->entries())->toBe([
+        ['teamId' => '1', 'probability' => 0.6],
+        ['teamId' => '2', 'probability' => 0.4],
+    ]);
+});
+
 it('spreads the title uniformly across all contenders at kick-off', function () {
     $teams = [team('a'), team('b'), team('c'), team('d')];
     $remaining = (new BergerRoundRobinScheduler)->schedule($teams);

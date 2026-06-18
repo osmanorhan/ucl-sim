@@ -23,7 +23,7 @@ final readonly class SettledOrSimulated implements ChampionPredictor
     public function predict(array $teams, array $played, array $remaining, RandomSource $random): ChampionProbabilities
     {
         $clinched = $this->clincher->predict($teams, $played, $remaining, $random);
-        $odds = $clinched->toArray();
+        $odds = array_column($clinched->entries(), 'probability');
 
         if ($odds !== [] && max($odds) === 1.0) {
             return $clinched;

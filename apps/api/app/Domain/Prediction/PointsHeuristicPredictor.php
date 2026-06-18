@@ -28,8 +28,9 @@ final readonly class PointsHeuristicPredictor implements ChampionPredictor
 
         $total = array_sum($weights);
 
-        return new ChampionProbabilities(
-            array_map(static fn (float $weight): float => $weight / $total, $weights),
+        return ChampionProbabilities::fromTeams(
+            $teams,
+            static fn ($team): float => $weights[$team->id] / $total,
         );
     }
 }

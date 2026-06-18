@@ -61,6 +61,12 @@ it('scores Brier as squared error against the one-hot outcome', function () {
         ->and($brier->score($forecast, 'b'))->toEqualWithDelta(0.98, 1e-9);
 });
 
+it('scores numeric string champion identifiers as strings', function () {
+    $forecast = new ChampionProbabilities(['1' => 0.7, '2' => 0.3]);
+
+    expect((new BrierScore)->score($forecast, '1'))->toEqualWithDelta(0.18, 1e-9);
+});
+
 it('scores log loss as the negative log of the realised champion probability', function () {
     $forecast = new ChampionProbabilities(['a' => 0.25, 'b' => 0.75]);
 
@@ -104,6 +110,18 @@ it('flags both a sampled and a deterministic predictor as reproducible under a f
 
     expect($cards['monte-carlo']->deterministic)->toBeTrue()
         ->and($cards['clincher']->deterministic)->toBeTrue();
+});
+
+it('benchmarks leagues with numeric string team identifiers', function () {
+    $teams = [team('1', 90.0), team('2', 65.0), team('3', 45.0), team('4', 30.0)];
+    $scenario = new Scenario($teams, [], (new BergerRoundRobinScheduler)->schedule($teams), 11);
+
+    $cards = harness()->compare([
+        'monte-carlo' => monteCarlo(iterations: 100),
+        'clincher' => clincher(),
+    ], [$scenario], groundTruthDraws: 100);
+
+    expect($cards)->toHaveCount(2);
 });
 
 it('rewards the clincher with a zero Brier once the title is settled, and ranks it first', function () {

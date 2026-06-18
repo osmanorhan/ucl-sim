@@ -15,8 +15,9 @@ final readonly class BrierScore implements ScoringRule
     public function score(ChampionProbabilities $forecast, string $actualChampionId): float
     {
         $sum = 0.0;
-        foreach ($forecast->toArray() as $teamId => $probability) {
-            $outcome = $teamId === $actualChampionId ? 1.0 : 0.0;
+        foreach ($forecast->entries() as $entry) {
+            $outcome = $entry['teamId'] === $actualChampionId ? 1.0 : 0.0;
+            $probability = $entry['probability'];
             $sum += ($probability - $outcome) ** 2;
         }
 

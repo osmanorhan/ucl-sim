@@ -116,17 +116,13 @@ final readonly class SnapshotAssembler
             $state->played(),
             $state->remaining(),
             new SeededRandomSource($state->seed + self::PREDICTION_SEED_OFFSET),
-        )->toArray();
+        )->entries();
 
-        arsort($odds);
+        usort($odds, static fn (array $a, array $b): int => $b['probability'] <=> $a['probability']);
 
         return [
             'predictor' => $this->liveKey,
-            'odds' => array_map(
-                static fn (string $teamId, float $probability): array => ['teamId' => $teamId, 'probability' => $probability],
-                array_keys($odds),
-                array_values($odds),
-            ),
+            'odds' => $odds,
         ];
     }
 }

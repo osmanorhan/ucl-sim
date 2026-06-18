@@ -41,12 +41,10 @@ final readonly class DeterministicClincher implements ChampionPredictor
 
         $share = 1.0 / count($contenders);
 
-        $probabilities = [];
-        foreach ($teams as $team) {
-            $probabilities[$team->id] = isset($contenders[$team->id]) ? $share : 0.0;
-        }
-
-        return new ChampionProbabilities($probabilities);
+        return ChampionProbabilities::fromTeams(
+            $teams,
+            static fn (Team $team): float => isset($contenders[$team->id]) ? $share : 0.0,
+        );
     }
 
     /**

@@ -64,7 +64,7 @@ final readonly class EvaluationHarness
 
     /**
      * @param  Scenario[]  $scenarios
-     * @param  array<int, array<string, int>>  $truth  per scenario, champion id => times realised
+     * @param  array<int, array<int, array{championId: string, count: int}>>  $truth
      */
     private function scoreOne(string $label, ChampionPredictor $predictor, array $scenarios, array $truth): StrategyScorecard
     {
@@ -81,10 +81,10 @@ final readonly class EvaluationHarness
             );
             $latencyNs += hrtime(true) - $start;
 
-            foreach ($truth[$i] as $champion => $count) {
-                $brierTotal += $count * $this->brier->score($forecast, $champion);
-                $logLossTotal += $count * $this->logLoss->score($forecast, $champion);
-                $samples += $count;
+            foreach ($truth[$i] as $realisation) {
+                $brierTotal += $realisation['count'] * $this->brier->score($forecast, $realisation['championId']);
+                $logLossTotal += $realisation['count'] * $this->logLoss->score($forecast, $realisation['championId']);
+                $samples += $realisation['count'];
             }
         }
 
@@ -102,7 +102,7 @@ final readonly class EvaluationHarness
      * outcome depends only on which team won, not which draw it was, so a predictor is graded once
      * per distinct champion and weighted by its count rather than re-scored on every identical draw.
      *
-     * @return array<string, int> champion id => times realised across the draws
+     * @return array<int, array{championId: string, count: int}>
      */
     private function groundTruth(Scenario $scenario, int $draws): array
     {
@@ -115,7 +115,14 @@ final readonly class EvaluationHarness
             $counts[$champion] = ($counts[$champion] ?? 0) + 1;
         }
 
-        return $counts;
+        $truth = [];
+        foreach ($scenario->teams as $team) {
+            if (isset($counts[$team->id])) {
+                $truth[] = ['championId' => $team->id, 'count' => $counts[$team->id]];
+            }
+        }
+
+        return $truth;
     }
 
     /**
@@ -128,6 +135,6 @@ final readonly class EvaluationHarness
         $first = $predictor->predict($scenario->teams, $scenario->played, $scenario->remaining, new SeededRandomSource($scenario->seed));
         $second = $predictor->predict($scenario->teams, $scenario->played, $scenario->remaining, new SeededRandomSource($scenario->seed));
 
-        return $first->toArray() === $second->toArray();
+        return $first->entries() === $second->entries();
     }
 }

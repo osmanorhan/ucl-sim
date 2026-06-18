@@ -6,7 +6,6 @@ namespace App\Domain\Prediction;
 
 use App\Domain\Random\RandomSource;
 use App\Domain\Support\Guard;
-use App\Domain\Team\Team;
 
 /**
  * Completes the remaining fixtures many times, ranks each finished season with the league's own
@@ -24,7 +23,10 @@ final readonly class MonteCarloPredictor implements ChampionPredictor
 
     public function predict(array $teams, array $played, array $remaining, RandomSource $random): ChampionProbabilities
     {
-        $titles = array_fill_keys(array_map(static fn (Team $t): string => $t->id, $teams), 0);
+        $titles = [];
+        foreach ($teams as $team) {
+            $titles[$team->id] = 0;
+        }
 
         $sampler = $this->samplers->compile($teams, $played, $remaining);
 
@@ -32,8 +34,9 @@ final readonly class MonteCarloPredictor implements ChampionPredictor
             $titles[$sampler->draw($random)]++;
         }
 
-        return new ChampionProbabilities(
-            array_map(fn (int $count): float => $count / $this->iterations, $titles),
+        return ChampionProbabilities::fromTeams(
+            $teams,
+            fn ($team): float => $titles[$team->id] / $this->iterations,
         );
     }
 }
