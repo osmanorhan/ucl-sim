@@ -116,6 +116,10 @@ A ready-to-run **Bruno** collection for all of these lives in [`bruno/`](bruno/)
 in [Bruno](https://www.usebruno.com), pick the **Local** environment, and run the requests top to
 bottom (the create request captures `leagueId`/`matchId` for the rest).
 
+The app no authn/authz. Mutating endpoints and the heavy evaluation
+harness are IP rate-limited at the Laravel edge; production would add league ownership before
+exposing shared data.
+
 ---
 
 ## Testing

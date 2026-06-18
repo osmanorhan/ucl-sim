@@ -27,7 +27,10 @@ use App\Domain\Simulation\PoissonGoalModel;
 use App\Domain\Simulation\PoissonMatchSimulator;
 use App\Infrastructure\Persistence\EloquentLeagueRepository;
 use App\Infrastructure\Registry\StrategyRegistry;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,6 +38,17 @@ class AppServiceProvider extends ServiceProvider
     private const LIVE_STRATEGY_KEY = 'settled-or-simulated';
 
     private const DEFAULT_ITERATIONS = 10_000;
+
+    public function boot(): void
+    {
+        RateLimiter::for('league-mutations', fn (Request $request): Limit => Limit::perMinute(
+            $this->configInt('league.rate_limits.mutations_per_minute', 30),
+        )->by($this->rateLimitKey($request)));
+
+        RateLimiter::for('league-evaluation', fn (Request $request): Limit => Limit::perMinute(
+            $this->configInt('league.rate_limits.evaluation_per_minute', 6),
+        )->by($this->rateLimitKey($request)));
+    }
 
     public function register(): void
     {
@@ -74,8 +88,18 @@ class AppServiceProvider extends ServiceProvider
 
     private function predictionIterations(): int
     {
-        $configured = config('league.prediction_iterations');
+        return $this->configInt('league.prediction_iterations', self::DEFAULT_ITERATIONS);
+    }
 
-        return is_int($configured) ? $configured : self::DEFAULT_ITERATIONS;
+    private function configInt(string $key, int $default): int
+    {
+        $configured = config($key);
+
+        return is_int($configured) ? $configured : $default;
+    }
+
+    private function rateLimitKey(Request $request): string
+    {
+        return sprintf('%s:%s', $request->ip(), $request->route('id', 'global'));
     }
 }

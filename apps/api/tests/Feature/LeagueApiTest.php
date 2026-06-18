@@ -205,6 +205,26 @@ it('ranks the strategy field through the evaluation harness', function () {
         ->and($briers)->toEqual(collect($briers)->sort()->values()->all());
 });
 
+it('rate limits the evaluation harness separately from cheap reads', function () {
+    config(['league.rate_limits.evaluation_per_minute' => 1]);
+
+    $id = createLeague();
+    $this->postJson("/api/leagues/{$id}/play-week");
+
+    $this->getJson("/api/leagues/{$id}")->assertOk();
+    $this->getJson("/api/leagues/{$id}/evaluation")->assertOk();
+    $this->getJson("/api/leagues/{$id}/evaluation")->assertTooManyRequests();
+});
+
+it('rate limits mutating endpoints', function () {
+    $id = createLeague();
+
+    config(['league.rate_limits.mutations_per_minute' => 1]);
+
+    $this->postJson("/api/leagues/{$id}/play-week")->assertOk();
+    $this->postJson("/api/leagues/{$id}/play-week")->assertTooManyRequests();
+});
+
 it('returns 404 for an unknown league and 409 once the season is complete', function () {
     $this->getJson('/api/leagues/missing')->assertStatus(404);
 

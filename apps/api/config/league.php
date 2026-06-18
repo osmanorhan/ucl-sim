@@ -17,4 +17,9 @@ return [
         'scenarios' => (int) env('LEAGUE_EVALUATION_SCENARIOS', 6),
         'ground_truth_draws' => (int) env('LEAGUE_EVALUATION_DRAWS', 400),
     ],
+
+    'rate_limits' => [
+        'mutations_per_minute' => (int) env('LEAGUE_MUTATION_RATE_LIMIT', 30),
+        'evaluation_per_minute' => (int) env('LEAGUE_EVALUATION_RATE_LIMIT', 6),
+    ],
 ];
