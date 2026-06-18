@@ -25,6 +25,32 @@ PHPStan max · Pint.
 
 A pure domain core with side effects pushed to the edges:
 
+### Application architecture
+
+```mermaid
+flowchart TD
+  Browser[Browser]
+  SPA["Vue 3 SPA<br/>views, Pinia store, Zod API boundary"]
+  API["Laravel API<br/>controllers, requests, use-cases"]
+  Domain["Pure domain core<br/>scheduling, ranking, simulation, prediction, evaluation"]
+  Persistence["Eloquent repository<br/>LeagueState mapping"]
+  DB[("SQLite<br/>facts + versioned snapshot")]
+
+  Browser --> SPA
+  SPA -->|snapshot contract| API
+  API --> Domain
+  API --> Persistence
+  Domain -->|derived table, fixtures, odds| API
+  Persistence --> DB
+  DB --> Persistence
+  API -->|atomic snapshot| SPA
+```
+
+The client renders the server snapshot; it does not recompute standings, fixtures, or predictions.
+Laravel owns mutations. The domain owns rules and algorithms. SQLite stores facts plus the latest
+snapshot. Detailed diagrams for mutation flow, strategy seams, prediction, evaluation, and
+persistence are in [`docs/architecture-diagrams.md`](docs/architecture-diagrams.md).
+
 ```
 app/Domain/          pure PHP, zero Illuminate imports (enforced by an arch test)
   Team/ League/ Ranking/ Scheduling/ Simulation/ Prediction/ Evaluation/ Random/ Persistence/
