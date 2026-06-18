@@ -1,5 +1,8 @@
 # Champions League Simulation
 
+**Live demo: [ucl-sim.fly.dev](https://ucl-sim.fly.dev/)**
+
+[![Live](https://img.shields.io/badge/live-ucl--sim.fly.dev-success)](https://ucl-sim.fly.dev/)
 [![CI](https://github.com/osmanorhan/ucl-sim/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/osmanorhan/ucl-sim/actions/workflows/ci.yml)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=osmanorhan_ucl-sim&metric=coverage)](https://sonarcloud.io/summary/new_code?id=osmanorhan_ucl-sim)
 [![PHP](https://img.shields.io/badge/PHP-%5E8.3-777bb4?logo=php&logoColor=white)](apps/api/composer.json)
@@ -116,9 +119,24 @@ A ready-to-run **Bruno** collection for all of these lives in [`bruno/`](bruno/)
 in [Bruno](https://www.usebruno.com), pick the **Local** environment, and run the requests top to
 bottom (the create request captures `leagueId`/`matchId` for the rest).
 
-This take-home intentionally has no authn/authz. Mutating endpoints and the heavy evaluation
-harness are IP rate-limited at the Laravel edge; production would add league ownership before
-exposing shared data.
+### Scope
+
+A few things are left out on purpose, each with a ready seam rather than a stub:
+
+- **No authn/authz.** Mutating endpoints and the heavy evaluation harness are IP rate-limited at
+  the Laravel edge; production would add league ownership before exposing shared data.
+- **No live multi-tab push.** Concurrent writes are already *correct* — the optimistic `version`
+  guard rejects a stale write (HTTP 409) and the client discards out-of-order snapshots (ADR-03/07),
+  so two tabs can never diverge. A second tab's *view* simply won't refresh until its next action; a
+  push channel (WebSocket/SSE/`BroadcastChannel`) drops in behind the same `applySnapshot` seam with
+  no view change (ADR-07) when that freshness is worth the moving parts.
+- **No event log.** We store current facts and re-fold them (ADR-06); we don't journal an
+  append-only stream of `MatchPlayed`/`ResultEdited`. That stream would add audit, undo, and
+  time-travel — and provenance is half there already (every result carries `ResultOrigin`).
+- **Synchronous evaluation.** The harness runs in-request, IP rate-limited to protect the box;
+  production would hand it to a queue/worker and poll the job.
+- **Single-writer, single node.** One machine + SQLite is deliberate for the write model
+  (ADR-02/08); horizontal scale would swap in the Postgres drop-in behind `LeagueRepository` (ADR-02).
 
 ---
 
