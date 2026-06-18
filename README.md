@@ -16,7 +16,7 @@ so the interesting artifact is the harness that compares them.
 Design rationale lives in [`docs/plan.md`](docs/plan.md); every non-trivial decision is an ADR in
 [`docs/decisions/`](docs/decisions/). Engineering principles are in [`CLAUDE.md`](CLAUDE.md).
 
-**Stack:** PHP 8.5 (≥8.3) / Laravel 13 (API-only) · Vue 3 + TypeScript (SPA) · SQLite · Pest 4 ·
+**Stack:** PHP ^8.3 (CI: 8.4) / Laravel 13 (API-only) · Vue 3 + TypeScript (SPA) · SQLite · Pest 4 ·
 PHPStan max · Pint.
 
 ---
@@ -116,7 +116,7 @@ A ready-to-run **Bruno** collection for all of these lives in [`bruno/`](bruno/)
 in [Bruno](https://www.usebruno.com), pick the **Local** environment, and run the requests top to
 bottom (the create request captures `leagueId`/`matchId` for the rest).
 
-The app no authn/authz. Mutating endpoints and the heavy evaluation
+This take-home intentionally has no authn/authz. Mutating endpoints and the heavy evaluation
 harness are IP rate-limited at the Laravel edge; production would add league ownership before
 exposing shared data.
 
@@ -132,6 +132,7 @@ make e2e           # browser end-to-end (Playwright)
 make stan          # PHPStan, level max
 make arch          # domain-purity fitness test
 make lint          # Pint (format check)
+cd apps/api && composer test:mutation  # domain mutation score gate
 ```
 
 - **Domain / unit** — Pest, deterministic via seeded RNG; exact-sequence and distribution assertions.
@@ -139,6 +140,7 @@ make lint          # Pint (format check)
   `play-week ≡ play-all` invariant, edit re-fold, prediction gating, evaluation ranking, 404/409,
   and validation.
 - **Architecture** — `app/Domain` may not import `Illuminate\*`; enforced in CI, not by discipline.
+- **Mutation** — Pest mutates covered `App\Domain` code in CI with an explicit score gate.
 - **Web** — Vitest pins the pure SPA seams; Playwright drives the built app against a mocked API
   (happy path + edge cases). See [`apps/web/README.md`](apps/web/README.md).
 - **Coverage / Sonar** — API coverage requires Xdebug or PCOV enabled locally. Sonar config lives

@@ -39,6 +39,9 @@ State-changing endpoints return one atomic snapshot:
 { "version": 1, "league": {}, "table": [], "fixtures": [], "predictions": null }
 ```
 
+This take-home intentionally has no authn/authz. Mutating endpoints and the heavier evaluation
+endpoint are IP rate-limited at the Laravel edge.
+
 ## Setup
 
 ```sh
@@ -55,6 +58,7 @@ Useful config:
 
 - `LEAGUE_PREDICTION_ITERATIONS` controls live Monte Carlo prediction work.
 - `LEAGUE_EVALUATION_SCENARIOS` and `LEAGUE_EVALUATION_DRAWS` control evaluation cost.
+- `LEAGUE_MUTATION_RATE_LIMIT` and `LEAGUE_EVALUATION_RATE_LIMIT` control API throttles.
 
 ## Test
 
@@ -63,8 +67,10 @@ composer test
 composer test:coverage
 composer stan
 composer lint
+composer test:mutation
 composer test -- --group=arch
 ```
 
 Pest covers domain rules, API flows, deterministic simulation, edits, prediction gating, and
-evaluation. The arch test enforces the pure-domain boundary.
+evaluation. The arch test enforces the pure-domain boundary; mutation testing gates covered
+domain code.

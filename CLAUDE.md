@@ -4,7 +4,7 @@ Champions League simulation - *miniature platform*: pluggable, comparable scorin
 "best" algorithm. Full design in [`docs/plan.md`](docs/plan.md). Decisions in
 [`docs/decisions/`](docs/decisions/).
 
-**Stack:** PHP 8.5 (≥8.3) / Laravel 13 · Vue 3 + TypeScript · SQLite · Docker · GitHub Actions.
+**Stack:** PHP ^8.3 (CI: 8.4) / Laravel 13 · Vue 3 + TypeScript · SQLite · Docker · GitHub Actions.
 
 ---
 

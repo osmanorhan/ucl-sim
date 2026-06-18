@@ -1,8 +1,7 @@
 # Champions League Simulation — Implementation Plan
 
-> **Status:** design locked, pre-implementation
-> **Stack:** PHP 8.5 (≥8.3) / Laravel 13, Vue 3 + TypeScript, SQLite, Docker, GitHub Actions
-> **Spec:** see [`requirements.md`](requirements.md)
+> **Status:** implemented; as-built deltas reconciled 2026-06-18
+> **Stack:** PHP ^8.3 (CI: 8.4) / Laravel 13, Vue 3 + TypeScript, SQLite, Docker, GitHub Actions
 
 ---
 
@@ -19,14 +18,14 @@ is better / safer / faster, and roll back in seconds. This codebase is built to 
 | Football case | What it stands in for |
 |---|---|
 | `MatchSimulator` (Poisson) | candidate scoring model |
-| `ChampionshipPredictor` (Monte Carlo) | ranking strategy → top-N |
+| `ChampionPredictor` (Monte Carlo) | ranking strategy → top-N |
 | team `power` → goal rate λ | item/user features → relevance score |
 | "plug & play algorithms" | model/strategy **registry**, hot-swappable |
 | "which is better / safer / faster" | offline eval + champion/challenger |
 | seeded PRNG → reproducible | replayable scoring, deterministic experiments |
 | immutable results + projection | event log + materialized view (backfill/replay) |
 | property/invariant tests | guardrail metrics on output |
-| prediction confidence interval | uncertainty-aware ranking (explore/exploit) |
+| prediction probability distribution | uncertainty-aware ranking |
 
 **Guiding principle (non-negotiable):** *in a real environment no single algorithm always
 wins.* Therefore the centerpiece is not the Poisson math — it is the **seam** that makes
@@ -83,9 +82,9 @@ double round-robin (6 games/team, 12 total, 6 weeks).
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ Delivery        Vue 3 SPA  ·  REST controllers + API Resources │
+│ Delivery        Vue 3 SPA  ·  REST controllers + FormRequests   │
 ├──────────────────────────────────────────────────────────────┤
-│ Application     LeagueService · SimulationService · EvalHarness│   orchestration, no domain rules
+│ Application     LeagueService · SnapshotAssembler · Evaluator   │   orchestration, no domain rules
 ├──────────────────────────────────────────────────────────────┤
 │ Domain (pure)   Entities · Value Objects · Strategy interfaces │   zero Illuminate imports
 │                 LeagueTable projection · Comparators · RNG     │
@@ -113,17 +112,17 @@ see §7.4). Laravel is a delivery and persistence detail.
                              CompositeComparator.php  PremierLeagueRanking.php
           Support/           Guard.php
           Scheduling/        FixtureScheduler.php  BergerRoundRobinScheduler.php
-          Simulation/        MatchSimulator.php  PoissonSimulator.php
-                             EloSimulator.php  NaiveWeightedSimulator.php
-                             GoalModel.php  PowerExponentialGoalModel.php
-          Prediction/        ChampionshipPredictor.php  MonteCarloPredictor.php
+          Simulation/        MatchSimulator.php  PoissonMatchSimulator.php
+                             GoalModel.php  PoissonGoalModel.php
+                             SeasonProgression.php  SeasonSimulator.php
+          Prediction/        ChampionPredictor.php  MonteCarloPredictor.php
                              DeterministicClincher.php  PointsHeuristicPredictor.php
-                             PredictionResult.php
+                             SettledOrSimulated.php  ChampionProbabilities.php
           Random/            RandomSource.php  SeededRandomSource.php
           Evaluation/        EvaluationHarness.php  StrategyScorecard.php
-        Application/         LeagueService.php  SimulationService.php  PredictionService.php
+        Application/         LeagueService.php  SnapshotAssembler.php  StrategyEvaluator.php
         Infrastructure/      Persistence/ (Eloquent repos)  Registry/StrategyRegistry.php
-        Http/                Controllers/  Resources/  Requests/
+        Http/                Controllers/  Requests/
         Models/              Eloquent models (Team, MatchRecord, League)
       tests/                 Pest (Unit/ Feature/ Arch/)
     web/                     Vue 3 + Vite SPA — pnpm
@@ -132,7 +131,7 @@ see §7.4). Laravel is a delivery and persistence detail.
                              PredictionPanel.vue  LeagueControls.vue
         stores/              Pinia league store (atomic snapshot apply, ADR 03)
         composables/         API client
-        types/               generated from PHP DTOs/Resources (no hand-sync)
+        types/               TypeScript API boundary types
   docs/
   Makefile  docker-compose.yml
 ```
@@ -143,21 +142,19 @@ Two interfaces carry the whole "no single algorithm wins" thesis:
 
 ```php
 interface MatchSimulator {
-    public function simulate(Team $home, Team $away, RandomSource $rng): MatchResult;
-    public function key(): string;          // registry id, e.g. "poisson"
+    public function prepare(Team $home, Team $away): MatchSampler;
 }
 
-interface ChampionshipPredictor {
-    /** @return PredictionResult  team => probability (+ confidence interval) */
-    public function predict(LeagueState $state, RandomSource $rng): PredictionResult;
-    public function key(): string;
+interface ChampionPredictor {
+    public function predict(array $teams, array $played, array $remaining, RandomSource $random): ChampionProbabilities;
 }
 ```
 
-- Implementations are **plug-ins**, registered via container tags in a `StrategyRegistry`.
-  Adding one = implement interface + tag. That single fact is the DX story.
-- Baselines exist *on purpose* (`NaiveWeightedSimulator`, `PointsHeuristicPredictor`) so the
-  good strategies have something to be measured against.
+- Prediction implementations are registered in a `StrategyRegistry`; the live path uses
+  `SettledOrSimulated`, and evaluation scores the registered field.
+- Baselines exist *on purpose* (`PointsHeuristicPredictor`) so the stronger strategies have
+  something to be measured against. Extra match simulators were cut; the extension seam is
+  `GoalModel` / `MatchSimulator`, not unused classes.
 
 ### 2.4 The evaluation harness (the differentiator)
 
@@ -176,16 +173,14 @@ end many times to draw realised champions; each predictor's estimate is graded a
 same outcomes with **Brier / log-loss** (proper rules — truth-telling minimises expected loss),
 under **common random numbers** (paired, so outcome noise cancels), alongside **latency** and a
 **determinism** check (same seed → identical output). Predictors arrive **labelled** rather than
-carrying a registry `key()` — identity is deferred to the Phase-4 registry. Randomness is supplied
+carrying a registry `key()` — identity lives in the infrastructure registry. Randomness is supplied
 per `predict()` call, not held, so a run is reproducible from the source it is handed. This is
 literally "analyse which one is better, safer, faster" and is what makes this a platform.
 
 **Latency is a per-strategy benchmark, not an architectural special case.** Each strategy owns
-its scorecard; from measured `meanLatencyMs` the harness classifies it **inline-safe vs
-needs-async** against a latency budget. The active predictor on the live path is configurable —
-a cheap default (`DeterministicClincher` + `PointsHeuristicPredictor`) serves inline, while a
-heavy Monte Carlo is one plug-in that earns the hot path only if its scorecard says it's fast
-enough. No algorithm dictates the design; the harness decides deployment fitness.
+its scorecard, including measured `meanLatencyMs`. The live predictor is selected at the
+application edge; the evaluation harness supplies the data needed to decide whether a strategy
+belongs inline or behind an async/cache seam later.
 
 ---
 
@@ -193,7 +188,7 @@ enough. No algorithm dictates the design; the harness decides deployment fitness
 
 ### 3.1 Seeded `RandomSource`
 Single injected interface; `SeededRandomSource` wraps a Mersenne-Twister seeded per league/run.
-The seed is **persisted** with the league and **logged** on every run. Buys: reproducible
+The seed is **persisted** with the league. Buys: reproducible
 matches, non-flaky tests asserting *exact* sequences, deterministic recompute, and a
 "replay this league" demo.
 
@@ -276,8 +271,9 @@ and is represented instead as e.g. 90-vs-45. A model that ingests *any* range (e
   "9 points ahead" example with zero sampling noise.
 - `MonteCarloPredictor` simulates the remaining fixtures N≈10⁴ times via the *same*
   `MatchSimulator`, completes the table each run (composite comparator handles shared-first),
-  tallies titles. Output: probability **+ Wilson confidence interval** (shows *how sure*).
-- A `HybridPredictor` may compose the two (clincher short-circuit, MC for the rest) — optional.
+  tallies titles. Output: a probability distribution over champion ids.
+- `SettledOrSimulated` composes the two: settled seasons return exact probabilities, otherwise
+  the Monte Carlo predictor estimates the remaining title race.
 - **Off the read path.** Predictions are recomputed on the state-changing *write* and served
   from the snapshot (ADR 01); `GET` is O(1). The MC kernel is allocation-light (int arrays, no
   per-trial value objects) over the same `GoalModel`, JIT-friendly. If a run exceeds its time
@@ -296,7 +292,7 @@ and is represented instead as e.g. 90-vs-45. A model that ingests *any* range (e
   edit later needs fan-out (async prediction recompute, cache warm, realtime push), that is a
   **pull-vs-push** decision. *Resolved (ADR 01): the Monte Carlo cost tips this to
   **precompute-on-write** — the write recomputes predictions into a versioned snapshot; the
-  queued + websocket variant stays future work behind the same `PredictionService` seam.*
+  queued + websocket variant stays future work behind the same snapshot recompute seam.*
 
 ---
 
@@ -343,10 +339,9 @@ GET    /api/leagues/{id}/predictions     championship odds (week ≥ 4)
 GET    /api/leagues/{id}/evaluation      strategy scorecards (harness)
 ```
 
-State-changing endpoints return one **versioned snapshot** `{ version, table, fixtures,
+State-changing endpoints return one **versioned snapshot** `{ version, league, table, fixtures,
 predictions }` from a single server state (ADR 03) — the client never stitches together
-separate refetches. API Resources keep response shapes explicit and typed; FormRequests
-validate input.
+separate refetches. `SnapshotAssembler` owns response shape; FormRequests validate input.
 
 ---
 
@@ -354,10 +349,10 @@ validate input.
 
 - `LeagueTable.vue` — sortable standings, derived from API projection.
 - `WeekFixtures.vue` / `MatchCard.vue` — per-week results; `MatchCard` supports inline edit.
-- `PredictionPanel.vue` — appears week ≥ 4; probability bars + confidence interval.
+- `PredictionPanel.vue` — appears week ≥ 4; probability bars.
 - `LeagueControls.vue` — Play Week / Play All Season / reset (seeded).
 - **Pinia** store for league state; **composables** for the API client; shared **TS types**
-  generated from / mirrored against API Resources.
+  at the web API boundary.
 - **No drift by construction (ADR 03):** mutations return a versioned snapshot; the store
   applies it in one atomic `$patch` and discards out-of-order (stale-`version`) responses;
   components are pure derivations and never refetch derived data. UI is pessimistic (unified
@@ -367,13 +362,13 @@ validate input.
 
 ## 10. Deployment & CI/CD
 
-- **Docker** multi-stage (PHP-FPM + built Vite assets); `docker-compose` for local dev with a
+- **Docker** multi-stage (FrankenPHP + built Vite assets); `docker-compose` for local dev with a
   seeded demo league.
 - **GitHub Actions**: `Pint → PHPStan(max) → Pest → mutation testing → Vitest → Playwright → build →
   deploy`. Branch protected on green.
-- **Fly.io** deploy with SQLite volume; seed logged so the live demo is reproducible.
+- **Fly.io** deploy with SQLite volume; persisted seeds keep league runs reproducible.
 - **SQLite hardening (ADR 02):** WAL journal mode + `busy_timeout=5000` on the connection;
-  tests use isolated per-worker DBs (`:memory:` / paratest); the EvaluationHarness is pure
+  tests use isolated in-memory DBs; the EvaluationHarness is pure
   domain and touches no DB. Persistence behind a repository interface → Postgres is a drop-in.
 - `make` targets: `make test`, `make stan`, `make eval`, `make up`.
 
@@ -384,8 +379,8 @@ validate input.
 | Phase | Deliverable | Acceptance |
 |---|---|---|
 | **1. Pure domain core** | VOs, `CompositeComparator`, `LeagueTable` projection, `BergerRoundRobinScheduler` | property tests green; 12-match double round-robin generated correctly; arch test enforces purity |
-| **2. Strategy seam** | `MatchSimulator`/`ChampionshipPredictor` interfaces, `PoissonSimulator`, `MonteCarloPredictor`, `DeterministicClincher`, `SeededRandomSource` | exact-sequence tests; distribution test within tolerance; clincher returns exact 1.0/0.0 |
+| **2. Strategy seam** | `MatchSimulator`/`ChampionPredictor` interfaces, `PoissonMatchSimulator`, `MonteCarloPredictor`, `DeterministicClincher`, `SeededRandomSource` | exact-sequence tests; distribution test within tolerance; clincher returns exact 1.0/0.0 |
 | **3. Evaluation harness** ⭐ | `EvaluationHarness` + `StrategyScorecard` + `ScoringRule`/`BrierScore`/`LogLoss`, shared `ChampionSampler`, `PointsHeuristicPredictor` baseline | ✅ scorecard ranks MC above the points-heuristic baseline on Brier & log-loss; clincher scores 0 once settled; determinism check passes (ADR-05) |
-| **4. Laravel delivery** ✅ | migrations (`leagues`, `teams`, `matches`), `LeagueRepository`/Eloquent, `StrategyRegistry`, `LeagueState`+`SeasonProgression`, `LeagueService`+`SnapshotAssembler`, REST + feature tests | ✅ all 9 endpoints green; edit re-folds; **play-week × N ≡ play-all**; predictions gated at week ≥ 4; live odds via `SettledOrSimulated` (ADR-06) |
+| **4. Laravel delivery** ✅ | migrations (`leagues`, `teams`, `matches`), `LeagueRepository`/Eloquent, `StrategyRegistry`, `LeagueState`+`SeasonProgression`, `LeagueService`+`SnapshotAssembler`, REST + feature tests | ✅ all endpoints green; edit re-folds; **play-week × N ≡ play-all**; predictions gated at week ≥ 4; stale writes conflict; throttled mutations/evaluation; live odds via `SettledOrSimulated` (ADR-06) |
 | **5. Vue SPA** ✅ | the 5 components, Pinia store, inline edit, prediction panel (week ≥ 4) | ✅ Vitest pins the pure seams; Playwright E2E green (happy path + edge cases) against a mocked API; edits reflect immediately (ADR-07) |
 | **6. CI/CD + deploy** ✅ | single same-origin FrankenPHP image, GitHub Actions pipeline (API + web + E2E gates), Fly.io deploy | ✅ image builds and boots (health, SPA, deep-link fallback, `/api` all serve); pipeline gates both apps; deploy gated on green + push to `main` (ADR-08) |
