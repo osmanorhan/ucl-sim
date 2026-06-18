@@ -222,36 +222,6 @@ progress {
   font-weight: 700;
 }
 
-.create-form {
-  display: grid;
-  gap: 1rem;
-}
-
-.create-section {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.section-head {
-  display: grid;
-  gap: 0.2rem;
-}
-
-.section-head p,
-.create-footer {
-  color: var(--muted);
-  font-size: 0.86rem;
-}
-
-.create-footer {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-top: 1px solid var(--border);
-  padding-top: 0.75rem;
-}
 
 .panel-head {
   display: flex;
@@ -280,36 +250,6 @@ progress {
   background: var(--primary-strong);
 }
 
-.form-grid,
-.team-grid {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.form-grid {
-  grid-template-columns: minmax(0, 1fr) 12rem;
-  max-width: 760px;
-}
-
-.team-grid {
-  max-width: 760px;
-}
-
-.team-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 8rem auto;
-  gap: 0.5rem;
-  align-items: end;
-}
-
-.remove-team {
-  padding-bottom: 0.55rem;
-}
-
-.remove-team:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
 
 .field {
   display: grid;
@@ -535,19 +475,12 @@ progress {
 
 @media (max-width: 980px) {
   .layout,
-  .create-form,
-  .form-grid,
-  .team-row,
   .fixtures,
   .match {
     grid-template-columns: 1fr;
   }
 
   .route-header {
-    display: grid;
-  }
-
-  .create-footer {
     display: grid;
   }
 

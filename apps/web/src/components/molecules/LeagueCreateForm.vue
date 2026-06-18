@@ -2,10 +2,11 @@
 import { ref } from 'vue'
 import { z } from 'zod'
 import AppButton from '../atoms/AppButton.vue'
-import NumberField from '../atoms/NumberField.vue'
+import PowerSlider from '../atoms/PowerSlider.vue'
 import TextField from '../atoms/TextField.vue'
 import type { CreateLeaguePayload, TeamInput } from '../../types/league'
 import { CreateLeaguePayloadSchema } from '../../validation/leagueSchemas'
+import { sampleClubs } from '../../data/europeanClubs'
 
 defineProps<{
   disabled: boolean
@@ -17,29 +18,15 @@ const emit = defineEmits<{
 }>()
 
 const name = ref('Champions League')
-const seed = ref(42)
-const teams = ref<TeamInput[]>([
-  { id: 'a', name: 'Alpha', power: 90 },
-  { id: 'b', name: 'Bravo', power: 65 },
-  { id: 'c', name: 'Cosmos', power: 45 },
-  { id: 'd', name: 'Delta', power: 30 },
-])
+const teams = ref<TeamInput[]>(
+  sampleClubs(4).map((club, i) => ({ id: String(i), name: club.name, power: club.power })),
+)
 const errors = ref<Record<string, string>>({})
-const teamSeq = ref(teams.value.length)
-
-function addTeam() {
-  teamSeq.value += 1
-  teams.value.push({ id: `t${teamSeq.value}`, name: '', power: 50 })
-}
-
-function removeTeam(index: number) {
-  teams.value.splice(index, 1)
-}
 
 function submit() {
   const payload = {
     name: name.value,
-    seed: seed.value,
+    seed: Math.floor(Math.random() * 1_000_000),
     teams: teams.value.map((team) => ({ ...team })),
   }
 
@@ -72,13 +59,9 @@ function fieldErrors(error: z.ZodError): Record<string, string> {
     <section class="create-section">
       <div class="section-head">
         <h2>League setup</h2>
-        <p>Seed keeps the run reproducible.</p>
       </div>
 
-      <div class="form-grid">
-        <TextField id="league-name" v-model="name" label="Name" :error="errors.name" />
-        <NumberField id="league-seed" v-model="seed" label="Seed" :error="errors.seed" />
-      </div>
+      <TextField id="league-name" v-model="name" label="Name" :error="errors.name" class="name-field" />
     </section>
 
     <section class="create-section">
@@ -95,26 +78,14 @@ function fieldErrors(error: z.ZodError): Record<string, string> {
             label="Name"
             :error="errors[`teams.${index}.name`]"
           />
-          <NumberField
+          <PowerSlider
             :id="`team-${team.id}-power`"
             v-model="team.power"
-            label="Power"
-            :min="1"
             :error="errors[`teams.${index}.power`]"
           />
-          <button
-            type="button"
-            class="text-button remove-team"
-            :disabled="teams.length <= 2"
-            :aria-label="`Remove ${team.name || 'team'}`"
-            @click="removeTeam(index)"
-          >
-            Remove
-          </button>
         </div>
       </div>
 
-      <AppButton type="button" @click="addTeam">Add team</AppButton>
       <p v-if="errors.teams" class="field-error">{{ errors.teams }}</p>
     </section>
 
@@ -126,3 +97,64 @@ function fieldErrors(error: z.ZodError): Record<string, string> {
     </footer>
   </form>
 </template>
+
+<style scoped>
+.create-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.create-section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.section-head {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.section-head p {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.create-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.name-field {
+  max-width: 760px;
+}
+
+.team-grid {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 760px;
+}
+
+.team-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 14rem;
+  gap: 0.5rem;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .create-form,
+  .team-row {
+    grid-template-columns: 1fr;
+  }
+
+  .create-footer {
+    display: grid;
+  }
+}
+</style>
