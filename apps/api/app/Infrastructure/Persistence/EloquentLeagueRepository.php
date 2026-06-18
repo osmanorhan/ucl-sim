@@ -9,6 +9,7 @@ use App\Domain\League\LeagueState;
 use App\Domain\League\MatchResult;
 use App\Domain\League\ScheduledMatch;
 use App\Domain\Persistence\LeagueRepository;
+use App\Domain\Persistence\StaleLeagueState;
 use App\Domain\Team\PowerRating;
 use App\Domain\Team\Team as DomainTeam;
 use App\Models\League;
@@ -19,41 +20,40 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Maps the {@see LeagueState} aggregate to and from three tables. All the framework lives here, on
- * the persistence edge; the domain that calls it stays Illuminate-free. A save is one transaction
+ * the persistence edge; the domain that calls it stays Illuminate-free. Writes are one transaction
  * so the snapshot and the facts it summarises can never be observed out of step (ADR-03).
  */
 final class EloquentLeagueRepository implements LeagueRepository
 {
+    public function create(LeagueState $state, array $snapshot): void
+    {
+        DB::transaction(function () use ($state, $snapshot): void {
+            League::create([
+                'id' => $state->id,
+                'name' => $state->name,
+                'seed' => $state->seed,
+                'version' => $state->version,
+                'snapshot' => $snapshot,
+            ]);
+
+            $this->saveChildren($state);
+        });
+    }
+
     public function save(LeagueState $state, array $snapshot): void
     {
         DB::transaction(function () use ($state, $snapshot): void {
-            League::updateOrCreate(
-                ['id' => $state->id],
-                ['name' => $state->name, 'seed' => $state->seed, 'version' => $state->version, 'snapshot' => $snapshot],
-            );
+            $expectedVersion = $state->version - 1;
+            $updated = League::query()
+                ->whereKey($state->id)
+                ->where('version', $expectedVersion)
+                ->update($this->leagueUpdateAttributes($state, $snapshot));
 
-            foreach ($state->teams as $team) {
-                Team::updateOrCreate(
-                    ['league_id' => $state->id, 'team_id' => $team->id],
-                    ['name' => $team->name, 'power' => $team->power->value],
-                );
+            if ($updated !== 1) {
+                throw StaleLeagueState::id($state->id, $expectedVersion);
             }
 
-            foreach (array_values($state->matches) as $sequence => $match) {
-                MatchRecord::updateOrCreate(
-                    ['id' => $match->id],
-                    [
-                        'league_id' => $state->id,
-                        'sequence' => $sequence,
-                        'week' => $match->fixture->week,
-                        'home_team_id' => $match->fixture->homeTeamId,
-                        'away_team_id' => $match->fixture->awayTeamId,
-                        'home_goals' => $match->result?->homeGoals,
-                        'away_goals' => $match->result?->awayGoals,
-                        'origin' => $match->origin,
-                    ],
-                );
-            }
+            $this->saveChildren($state);
         });
     }
 
@@ -110,5 +110,45 @@ final class EloquentLeagueRepository implements LeagueRepository
             : new MatchResult($match->home_team_id, $match->away_team_id, $match->home_goals, $match->away_goals);
 
         return new ScheduledMatch($match->id, $fixture, $result, $match->origin);
+    }
+
+    /**
+     * @param  array<string, mixed>  $snapshot
+     * @return array<string, mixed>
+     */
+    private function leagueUpdateAttributes(LeagueState $state, array $snapshot): array
+    {
+        return (new League)->forceFill([
+            'name' => $state->name,
+            'seed' => $state->seed,
+            'version' => $state->version,
+            'snapshot' => $snapshot,
+        ])->getAttributes();
+    }
+
+    private function saveChildren(LeagueState $state): void
+    {
+        foreach ($state->teams as $team) {
+            Team::updateOrCreate(
+                ['league_id' => $state->id, 'team_id' => $team->id],
+                ['name' => $team->name, 'power' => $team->power->value],
+            );
+        }
+
+        foreach (array_values($state->matches) as $sequence => $match) {
+            MatchRecord::updateOrCreate(
+                ['id' => $match->id],
+                [
+                    'league_id' => $state->id,
+                    'sequence' => $sequence,
+                    'week' => $match->fixture->week,
+                    'home_team_id' => $match->fixture->homeTeamId,
+                    'away_team_id' => $match->fixture->awayTeamId,
+                    'home_goals' => $match->result?->homeGoals,
+                    'away_goals' => $match->result?->awayGoals,
+                    'origin' => $match->origin,
+                ],
+            );
+        }
     }
 }

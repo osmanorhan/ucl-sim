@@ -2,6 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Application\SnapshotAssembler;
+use App\Domain\League\LeagueState;
+use App\Domain\League\MatchResult;
+use App\Domain\League\ResultOrigin;
+use App\Domain\League\ScheduledMatch;
+use App\Domain\Persistence\LeagueRepository;
+use App\Domain\Persistence\StaleLeagueState;
 use App\Models\MatchRecord;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -38,6 +45,21 @@ function leaguePayload(int $seed = 42): array
 function createLeague(int $seed = 42): string
 {
     return test()->postJson(LEAGUES_URL, leaguePayload($seed))->json('league.id');
+}
+
+function playFirstFixture(LeagueState $state, int $homeGoals, int $awayGoals): LeagueState
+{
+    $targetId = $state->matches[0]->id;
+
+    return $state->withMatches(array_map(
+        static fn (ScheduledMatch $match): ScheduledMatch => $match->id === $targetId
+            ? $match->withResult(
+                new MatchResult($match->fixture->homeTeamId, $match->fixture->awayTeamId, $homeGoals, $awayGoals),
+                ResultOrigin::Simulated,
+            )
+            : $match,
+        $state->matches,
+    ));
 }
 
 /**
@@ -87,6 +109,29 @@ it('plays a week and advances the snapshot', function () {
     expect(goalsByMatch($response->json('fixtures')))->toHaveCount(2)
         ->and($response->json('fixtures.0.matches.0.origin'))->toBe('simulated')
         ->and($response->json('fixtures.5.matches.0.origin'))->toBeNull();
+});
+
+it('rejects stale aggregate writes instead of overwriting a newer version', function () {
+    $id = createLeague();
+
+    $repository = app(LeagueRepository::class);
+    $assembler = app(SnapshotAssembler::class);
+
+    $firstWriter = $repository->find($id);
+    $staleWriter = $repository->find($id);
+
+    $firstWrite = playFirstFixture($firstWriter, 1, 0);
+    $repository->save($firstWrite, $assembler->assemble($firstWrite));
+
+    $staleWrite = playFirstFixture($staleWriter, 0, 1);
+
+    expect(fn () => $repository->save($staleWrite, $assembler->assemble($staleWrite)))
+        ->toThrow(StaleLeagueState::class);
+
+    $stored = $repository->find($id);
+    expect($stored->version)->toBe(2)
+        ->and($stored->matches[0]->result->homeGoals)->toBe(1)
+        ->and($stored->matches[0]->result->awayGoals)->toBe(0);
 });
 
 it('plays the whole season in one call, equal to playing every week by hand', function () {

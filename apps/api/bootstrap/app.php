@@ -3,6 +3,7 @@
 use App\Application\Exceptions\LeagueNotFound;
 use App\Application\Exceptions\MatchNotEditable;
 use App\Application\Exceptions\SeasonComplete;
+use App\Domain\Persistence\StaleLeagueState;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Http\JsonResponse;
@@ -28,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             LeagueNotFound::class,
             MatchNotEditable::class,
             SeasonComplete::class,
+            StaleLeagueState::class,
         ]);
 
         $exceptions->report(function (Throwable $e): void {
@@ -43,6 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (LeagueNotFound $e) => response()->json(['message' => $e->getMessage()], 404));
         $exceptions->render(fn (MatchNotEditable $e) => response()->json(['message' => $e->getMessage()], 409));
         $exceptions->render(fn (SeasonComplete $e) => response()->json(['message' => $e->getMessage()], 409));
+        $exceptions->render(fn (StaleLeagueState $e) => response()->json(['message' => $e->getMessage()], 409));
 
         $exceptions->render(function (Throwable $e, Request $request): ?JsonResponse {
             if (! $request->is('api/*') || $e instanceof ValidationException) {

@@ -15,6 +15,9 @@ use App\Domain\League\LeagueState;
 interface LeagueRepository
 {
     /** @param array<string, mixed> $snapshot */
+    public function create(LeagueState $state, array $snapshot): void;
+
+    /** @param array<string, mixed> $snapshot */
     public function save(LeagueState $state, array $snapshot): void;
 
     public function find(string $id): ?LeagueState;

@@ -51,7 +51,7 @@ final readonly class LeagueService
 
         $state = new LeagueState(Str::uuid()->toString(), $name, $seed, 1, $domainTeams, $matches);
 
-        return $this->persist($state);
+        return $this->persistNew($state);
     }
 
     /** @return array<string, mixed> */
@@ -186,6 +186,15 @@ final readonly class LeagueService
     {
         $snapshot = $this->assembler->assemble($state);
         $this->repository->save($state, $snapshot);
+
+        return $snapshot;
+    }
+
+    /** @return array<string, mixed> */
+    private function persistNew(LeagueState $state): array
+    {
+        $snapshot = $this->assembler->assemble($state);
+        $this->repository->create($state, $snapshot);
 
         return $snapshot;
     }
