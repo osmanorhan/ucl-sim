@@ -23,6 +23,13 @@ return new class extends Migration
             $table->timestamps();
 
             $table->unique(['league_id', 'sequence']);
+
+            $table->foreign(['league_id', 'home_team_id'])
+                ->references(['league_id', 'team_id'])->on('teams')
+                ->cascadeOnDelete();
+            $table->foreign(['league_id', 'away_team_id'])
+                ->references(['league_id', 'team_id'])->on('teams')
+                ->cascadeOnDelete();
         });
     }
 

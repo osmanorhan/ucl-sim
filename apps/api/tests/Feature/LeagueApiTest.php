@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Models\MatchRecord;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -164,6 +166,20 @@ it('rejects a league that is not exactly four teams', function () {
     $tooMany['teams'][] = ['id' => 'e', 'name' => 'Echo', 'power' => 50.0];
     $tooMany['teams'][] = ['id' => 'f', 'name' => 'Foxtrot', 'power' => 40.0];
     $this->postJson(LEAGUES_URL, $tooMany)->assertStatus(422)->assertJsonValidationErrors('teams');
+});
+
+it('refuses to persist a match that references a team outside its league', function () {
+    $id = createLeague();
+
+    $danglingReference = fn () => MatchRecord::create([
+        'league_id' => $id,
+        'sequence' => 999,
+        'week' => 1,
+        'home_team_id' => 'ghost',
+        'away_team_id' => 'a',
+    ]);
+
+    expect($danglingReference)->toThrow(QueryException::class);
 });
 
 it('renders unexpected failures as a safe message without leaking a stack trace, even in debug', function () {
