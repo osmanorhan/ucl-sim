@@ -1,58 +1,70 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Champions League API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 13 API for the four-team Champions League simulation.
 
-## About Laravel
+The API owns league rules, persistence, simulation, prediction, and evaluation. Clients receive
+server-built snapshots and should not recompute standings, fixtures, or odds.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Architecture
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- `app/Domain` contains pure PHP league, ranking, scheduling, simulation, prediction, evaluation,
+  and random logic. It must not import Illuminate classes.
+- `app/Application` coordinates use cases and snapshot assembly.
+- `app/Infrastructure` adapts the domain to Eloquent persistence and strategy registration.
+- `app/Http` contains controllers and request validation.
+- `app/Models` contains Eloquent records for leagues, teams, and matches.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Facts are the source of truth. Match results are stored; table, fixtures, predictions, and the
+versioned snapshot are projected from those facts.
 
-## Learning Laravel
+## API
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+All routes are under `/api`.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/leagues` | Create a league from `name`, `seed`, and exactly four teams. |
+| `GET` | `/leagues/{id}` | Return the full snapshot. |
+| `GET` | `/leagues/{id}/table` | Return projected standings. |
+| `GET` | `/leagues/{id}/fixtures` | Return fixtures and results. |
+| `GET` | `/leagues/{id}/predictions` | Return championship odds; `409` until four weeks are complete. |
+| `GET` | `/leagues/{id}/evaluation` | Return strategy scorecards. |
+| `POST` | `/leagues/{id}/play-week` | Simulate the next week. |
+| `POST` | `/leagues/{id}/play-all` | Simulate the rest of the season. |
+| `PUT` | `/matches/{id}` | Correct a played match result. |
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+State-changing endpoints return one atomic snapshot:
 
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```json
+{ "version": 1, "league": {}, "table": [], "fixtures": [], "predictions": null }
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Setup
 
-## Contributing
+```sh
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+The local API is served at `http://127.0.0.1:8000/api`.
 
-## Code of Conduct
+Useful config:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- `LEAGUE_PREDICTION_ITERATIONS` controls live Monte Carlo prediction work.
+- `LEAGUE_EVALUATION_SCENARIOS` and `LEAGUE_EVALUATION_DRAWS` control evaluation cost.
 
-## Security Vulnerabilities
+## Test
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```sh
+composer test
+composer test:coverage
+composer stan
+composer lint
+composer test -- --group=arch
+```
 
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Pest covers domain rules, API flows, deterministic simulation, edits, prediction gating, and
+evaluation. The arch test enforces the pure-domain boundary.
