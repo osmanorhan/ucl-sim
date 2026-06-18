@@ -1,19 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { MAX_POWER } from '../../validation/leagueSchemas'
 
-const props = defineProps<{
+defineProps<{
   id: string
-  modelValue: number
   error?: string
 }>()
 
-const emit = defineEmits<{
-  'update:modelValue': [value: number]
-}>()
+const model = defineModel<number>({ required: true })
 
 const badgeColor = computed(() => {
-  if (props.modelValue < 35) return '#e05c5c'
-  if (props.modelValue < 65) return '#f59e0b'
+  if (model.value < 35) return '#e05c5c'
+  if (model.value < 65) return '#f59e0b'
   return '#22c55e'
 })
 </script>
@@ -22,19 +20,18 @@ const badgeColor = computed(() => {
   <div class="power-field">
     <div class="power-label-row">
       <span>Power</span>
-      <span class="power-badge" :style="{ color: badgeColor }">{{ modelValue }}</span>
+      <span class="power-badge" :style="{ color: badgeColor }">{{ model }}</span>
     </div>
     <input
       :id="id"
+      v-model.number="model"
       type="range"
       class="power-slider"
       min="1"
-      max="100"
-      :value="modelValue"
-      :style="{ '--pct': `${modelValue}%` }"
-      :aria-invalid="error === undefined ? undefined : true"
-      :aria-describedby="`${id}-error`"
-      @input="emit('update:modelValue', Number(($event.target as HTMLInputElement).value))"
+      :max="MAX_POWER"
+      :style="{ '--pct': `${model}%` }"
+      :aria-invalid="error ? true : undefined"
+      :aria-describedby="error ? `${id}-error` : undefined"
     />
     <span :id="`${id}-error`" class="field-error">{{ error }}</span>
   </div>

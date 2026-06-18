@@ -4,18 +4,15 @@ import { titleCase } from '../../domain/text'
 const props = defineProps<{
   id: string
   label: string
-  modelValue: string
   error?: string
   titleCase?: boolean
 }>()
 
-const emit = defineEmits<{
-  'update:modelValue': [value: string]
-}>()
+const model = defineModel<string>({ required: true })
 
 function commit() {
   if (props.titleCase) {
-    emit('update:modelValue', titleCase(props.modelValue))
+    model.value = titleCase(model.value)
   }
 }
 </script>
@@ -25,12 +22,11 @@ function commit() {
     <span>{{ label }}</span>
     <input
       :id="id"
+      v-model="model"
       type="text"
       :class="{ 'title-case': titleCase }"
-      :aria-invalid="error === undefined ? undefined : true"
-      :aria-describedby="`${id}-error`"
-      :value="modelValue"
-      @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      :aria-invalid="error ? true : undefined"
+      :aria-describedby="error ? `${id}-error` : undefined"
       @blur="commit"
     >
     <span :id="`${id}-error`" class="field-error">{{ error }}</span>
