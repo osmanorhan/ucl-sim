@@ -1,5 +1,13 @@
 # Champions League Simulation
 
+[![CI](https://github.com/osmanorhan/ucl-sim/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/osmanorhan/ucl-sim/actions/workflows/ci.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=osmanorhan_ucl-sim&metric=coverage)](https://sonarcloud.io/summary/new_code?id=osmanorhan_ucl-sim)
+[![PHP](https://img.shields.io/badge/PHP-%5E8.3-777bb4?logo=php&logoColor=white)](apps/api/composer.json)
+[![Laravel](https://img.shields.io/badge/Laravel-%5E13.8-ff2d20?logo=laravel&logoColor=white)](apps/api/composer.json)
+[![Node](https://img.shields.io/badge/Node-22-5fa04e?logo=nodedotjs&logoColor=white)](.github/workflows/ci.yml)
+[![Vue](https://img.shields.io/badge/Vue-3.5-42b883?logo=vuedotjs&logoColor=white)](apps/web/package.json)
+[![Docker](https://img.shields.io/badge/Docker-image%20smoke%20tested-2496ed?logo=docker&logoColor=white)](.github/workflows/ci.yml)
+
 A four-team Champions League group simulated under Premier League rules. Scoring and championship-prediction strategies
 are pluggable behind seams, and an **evaluation harness** grades them against each other
 (better / safer / faster) with proper scoring rules. The thesis: no single algorithm always wins,
@@ -88,6 +96,8 @@ bottom (the create request captures `leagueId`/`matchId` for the rest).
 
 ```bash
 make test          # api (domain + feature) and web (Vitest)
+make coverage      # Clover (API) + LCOV (web), consumed by Sonar
+make sonar         # coverage + local sonar-scanner
 make e2e           # browser end-to-end (Playwright)
 make stan          # PHPStan, level max
 make arch          # domain-purity fitness test
@@ -101,6 +111,8 @@ make lint          # Pint (format check)
 - **Architecture** — `app/Domain` may not import `Illuminate\*`; enforced in CI, not by discipline.
 - **Web** — Vitest pins the pure SPA seams; Playwright drives the built app against a mocked API
   (happy path + edge cases). See [`apps/web/README.md`](apps/web/README.md).
+- **Coverage / Sonar** — API coverage requires Xdebug or PCOV enabled locally. Sonar config lives
+  in [`sonar-project.properties`](sonar-project.properties).
 
 ---
 

@@ -90,9 +90,57 @@ jobs:
       - if: always()
         run: docker logs cl 2>&1 | tail -50 || true
 
+  quality:
+    name: Quality · coverage · sonar
+    needs: [api, web]
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: pdo_sqlite, sqlite3
+          coverage: xdebug
+          tools: composer:v2
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: apps/web/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+
+      - run: composer -d apps/api install --no-interaction --no-progress --prefer-dist
+      - run: pnpm -C apps/web install --frozen-lockfile
+      - run: composer -d apps/api test:coverage
+      - run: pnpm -C apps/web test:coverage
+
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            apps/api/coverage/clover.xml
+            apps/web/coverage/lcov.info
+          if-no-files-found: warn
+          retention-days: 7
+
+      - if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+
   deploy:
     name: Deploy to Fly
-    needs: [api, web, image]
+    needs: [api, web, image, quality]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     concurrency:

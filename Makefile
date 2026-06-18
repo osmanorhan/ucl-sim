@@ -14,6 +14,13 @@ test: ## Run all tests (domain/api + web)
 	composer -d $(API) test
 	pnpm -C $(WEB) test
 
+coverage: ## Generate local coverage reports for Sonar
+	composer -d $(API) test:coverage
+	pnpm -C $(WEB) test:coverage
+
+sonar: coverage ## Generate coverage and run SonarScanner locally
+	sonar-scanner
+
 e2e: ## Browser end-to-end tests (Playwright)
 	pnpm -C $(WEB) test:e2e
 
@@ -35,4 +42,4 @@ up: ## Run the production image locally (docker compose) on :8080
 deploy: ## Deploy the live link to Fly.io
 	flyctl deploy
 
-.PHONY: help install test e2e stan arch eval lint up deploy
+.PHONY: help install test coverage sonar e2e stan arch eval lint up deploy

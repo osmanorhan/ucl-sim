@@ -13,12 +13,14 @@
 /apps/api/database/*.sqlite
 /apps/api/.phpunit.cache/
 /apps/api/.phpunit.result.cache
+/apps/api/coverage/
 /apps/api/storage/phpstan/
 
 # JS / Vite (apps/web)
 /apps/web/node_modules/
 /apps/web/dist/
 /apps/web/.vite/
+/apps/web/coverage/
 
 # Tooling
 node_modules/

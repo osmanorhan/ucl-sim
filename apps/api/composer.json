@@ -49,6 +49,11 @@
             "@php artisan config:clear --ansi @no_additional_args",
             "@php artisan test"
         ],
+        "test:coverage": [
+            "mkdir -p coverage",
+            "@php artisan config:clear --ansi",
+            "XDEBUG_MODE=coverage ./vendor/bin/pest --coverage --coverage-clover=coverage/clover.xml"
+        ],
         "test:arch": "pest --group=arch",
         "stan": "phpstan analyse --no-progress --memory-limit=1G",
         "lint": "pint --test",
