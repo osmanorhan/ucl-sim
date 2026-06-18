@@ -1,14 +1,23 @@
 <script setup lang="ts">
-defineProps<{
+import { titleCase } from '../../domain/text'
+
+const props = defineProps<{
   id: string
   label: string
   modelValue: string
   error?: string
+  titleCase?: boolean
 }>()
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
+
+function commit() {
+  if (props.titleCase) {
+    emit('update:modelValue', titleCase(props.modelValue))
+  }
+}
 </script>
 
 <template>
@@ -17,10 +26,12 @@ const emit = defineEmits<{
     <input
       :id="id"
       type="text"
+      :class="{ 'title-case': titleCase }"
       :aria-invalid="error === undefined ? undefined : true"
       :aria-describedby="`${id}-error`"
       :value="modelValue"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+      @blur="commit"
     >
     <span :id="`${id}-error`" class="field-error">{{ error }}</span>
   </label>
@@ -33,6 +44,10 @@ const emit = defineEmits<{
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 650;
+}
+
+.title-case {
+  text-transform: capitalize;
 }
 
 .field-error {

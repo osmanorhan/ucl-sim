@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Rules\PlainText;
 use Illuminate\Foundation\Http\FormRequest;
 use LogicException;
 
@@ -18,11 +19,11 @@ class CreateLeagueRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', new PlainText],
             'seed' => ['required', 'integer'],
             'teams' => ['required', 'array', 'size:4'],
-            'teams.*.id' => ['required', 'string', 'max:64', 'distinct'],
-            'teams.*.name' => ['required', 'string', 'max:255'],
+            'teams.*.id' => ['required', 'string', 'max:64', 'distinct', 'alpha_dash:ascii'],
+            'teams.*.name' => ['required', 'string', 'max:255', new PlainText],
             'teams.*.power' => ['required', 'numeric', 'gt:0'],
         ];
     }

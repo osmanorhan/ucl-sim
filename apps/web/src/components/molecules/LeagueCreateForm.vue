@@ -7,6 +7,7 @@ import TextField from '../atoms/TextField.vue'
 import type { CreateLeaguePayload, TeamInput } from '../../types/league'
 import { CreateLeaguePayloadSchema } from '../../validation/leagueSchemas'
 import { sampleClubs } from '../../data/europeanClubs'
+import { titleCase } from '../../domain/text'
 
 defineProps<{
   disabled: boolean
@@ -25,9 +26,9 @@ const errors = ref<Record<string, string>>({})
 
 function submit() {
   const payload = {
-    name: name.value,
+    name: titleCase(name.value),
     seed: Math.floor(Math.random() * 1_000_000),
-    teams: teams.value.map((team) => ({ ...team })),
+    teams: teams.value.map((team) => ({ ...team, name: titleCase(team.name) })),
   }
 
   const result = CreateLeaguePayloadSchema.safeParse(payload)
@@ -61,7 +62,7 @@ function fieldErrors(error: z.ZodError): Record<string, string> {
         <h2>League setup</h2>
       </div>
 
-      <TextField id="league-name" v-model="name" label="Name" :error="errors.name" class="name-field" />
+      <TextField id="league-name" v-model="name" label="Name" :error="errors.name" class="name-field" title-case />
     </section>
 
     <section class="create-section">
@@ -77,6 +78,7 @@ function fieldErrors(error: z.ZodError): Record<string, string> {
             v-model="team.name"
             label="Name"
             :error="errors[`teams.${index}.name`]"
+            title-case
           />
           <PowerSlider
             :id="`team-${team.id}-power`"

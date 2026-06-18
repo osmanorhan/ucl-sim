@@ -244,6 +244,29 @@ it('rejects a league that is not exactly four teams', function () {
     $this->postJson(LEAGUES_URL, $tooMany)->assertStatus(422)->assertJsonValidationErrors('teams');
 });
 
+it('rejects free-text inputs carrying html or markup', function () {
+    $htmlName = leaguePayload();
+    $htmlName['name'] = '<script>alert(1)</script>';
+    $this->postJson(LEAGUES_URL, $htmlName)->assertStatus(422)->assertJsonValidationErrors('name');
+
+    $markedUpTeam = leaguePayload();
+    $markedUpTeam['teams'][0]['name'] = 'Alpha <b>bold</b>';
+    $this->postJson(LEAGUES_URL, $markedUpTeam)->assertStatus(422)->assertJsonValidationErrors('teams.0.name');
+
+    $injectedId = leaguePayload();
+    $injectedId['teams'][0]['id'] = 'a<b>';
+    $this->postJson(LEAGUES_URL, $injectedId)->assertStatus(422)->assertJsonValidationErrors('teams.0.id');
+});
+
+it('accepts accented, multi-script and punctuated names', function () {
+    $payload = leaguePayload();
+    $payload['name'] = 'Bayern München & Saint-Étienne (2026)';
+    $payload['teams'][0]['name'] = "Borussia M'gladbach";
+    $payload['teams'][1]['name'] = 'Beşiktaş';
+
+    $this->postJson(LEAGUES_URL, $payload)->assertCreated();
+});
+
 it('refuses to persist a match that references a team outside its league', function () {
     $id = createLeague();
 
